@@ -8,8 +8,10 @@ export class UserService {
   @InjectEntityModel(User)
   userRepo: Repository<User>;
   // 创建用户
-  async createUser(userData: Partial<User>) {
-    const user = this.userRepo.create(userData);//创建一个新的实体实例
+  async createUser(name:string,password:string) {
+    const user = this.userRepo.create();//创建一个新的实体实例
+    user.name=name;
+    user.password=password;
     return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
   }
 
