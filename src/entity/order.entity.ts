@@ -1,11 +1,11 @@
-import {Entity, Column, PrimaryGeneratedColumn, CreateDateColumn} from 'typeorm';
-import type {User} from './user.entity'
+import {Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne} from 'typeorm';
+import {User} from './user.entity'
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
   id: number;//订单号
 
-  @Column()
+  @ManyToOne(()=>User,undefined,{nullable:true})
   user: User//订单用户
 
   @CreateDateColumn()

@@ -1,5 +1,8 @@
 import { MidwayConfig } from '@midwayjs/core';
 import * as path from "node:path";
+import {User} from "../entity/user.entity";
+import {Order} from "../entity/order.entity";
+import {BlindBox} from "../entity/blindbox.entity";
 
 export default {
   // use for cookie sign key, should change to your own and keep security
@@ -11,13 +14,14 @@ export default {
     dataSource: {
       default: {
         type: 'sqlite',
-        database: path.join(__dirname, 'webapp.sqlite'),
+        database: path.join(__dirname, '../data/data.sqlite'),
         synchronize: true,
         logging: true,
-        entities: ['**/entity/*.entity{.ts,.js}'], // 实体文件路径
+        entities: [User,Order,BlindBox], // 实体文件路径
         // ...
       }
     }
+
   }
 } as MidwayConfig;
 

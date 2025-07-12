@@ -16,8 +16,6 @@ export class User {
   @Column({nullable:true})
   key:number//登录密钥
 
-  @Column()
-  numOfOrder:number;
 
   @OneToMany(()=> Order,undefined,{nullable:true})
   orders: Order[];

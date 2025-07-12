@@ -12,6 +12,8 @@ export class UserService {
     const user = this.userRepo.create();//创建一个新的实体实例
     user.name=name;
     user.password=password;
+    user.isVIP=false;
+    user.balance=0.0;
     return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
   }
 
@@ -44,7 +46,7 @@ export class UserService {
 
   // 删除用户（硬删除）
   async deleteUser(id: number) {
-    if (this.userRepo.findOne({where:{id}})!=null) {
+    if (await this.userRepo.findOne({where: {id}})!=null) {
       return await this.userRepo.delete(id);
     }else{
       throw new Error(`用户 ID ${id} 不存在，删除失败`);

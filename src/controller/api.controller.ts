@@ -1,4 +1,4 @@
-import {Inject, Controller, Get, Post, Body} from '@midwayjs/core';
+import {Inject, Controller, Get, Body, Options, Post} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import { UserService } from '../service/user.service';
 
@@ -22,12 +22,22 @@ export class APIController {
   }
 
   @Post('/register')
-  async register(@Body() body: { username: string, password: string }) {
-    const checking=await this.userService.getUserByName(body.username);
+  async register(@Body() body: { name: string, password: string }) {
+    const checking=await this.userService.getUserByName(body.name);
     if (checking===undefined||checking===null) {
-      await this.userService.createUser(body.username, body.password);
+      await this.userService.createUser(body.name, body.password);
       return {success: true,message:"注册成功"}
     }
     throw new Error('用户名已存在');
+  }
+
+  @Options('/register')
+  async handleOptions() {
+    return { success: true }; // 直接返回 200
+  }
+
+  @Get('/')
+  async temp(){
+    return 'it is a test'
   }
 }
