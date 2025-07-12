@@ -7,6 +7,18 @@ import {Repository} from "typeorm";
 export class UserService {
   @InjectEntityModel(User)
   userRepo: Repository<User>;
+
+  //创建初始管理员，仅后端可用，前端活动无法调用
+  async createAdmin(name:string,password:string) {
+    const user = this.userRepo.create();//创建一个新的实体实例
+    user.name=name;
+    user.password=password;
+    user.isVIP=false;
+    user.balance=0.0;
+    user.isAdministrator=true;
+    return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
+  }
+
   // 创建用户
   async createUser(name:string,password:string) {
     const user = this.userRepo.create();//创建一个新的实体实例
@@ -14,6 +26,7 @@ export class UserService {
     user.password=password;
     user.isVIP=false;
     user.balance=0.0;
+    user.isAdministrator=false;
     return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
   }
 

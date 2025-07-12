@@ -14,7 +14,7 @@ export class User {
   password:string;
 
   @Column({nullable:true})
-  key:number//登录密钥
+  token:string//登录密钥
 
 
   @OneToMany(()=> Order,undefined,{nullable:true})
@@ -25,4 +25,7 @@ export class User {
 
   @Column()
   isVIP:boolean;//vip功能（新增）
+
+  @Column()
+  isAdministrator:boolean;//管理员权限
 }
