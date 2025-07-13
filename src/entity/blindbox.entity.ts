@@ -1,5 +1,6 @@
-import { Entity, Column,PrimaryGeneratedColumn,OneToMany} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable} from 'typeorm';
 import {Order} from "./order.entity";
+import {Goods} from "./goods.entity";
 
 @Entity()
 export class BlindBox {
@@ -13,8 +14,12 @@ export class BlindBox {
   @Column({ nullable: true, comment: '图像路径' })
   avatarPath: string;
 
-  @Column({ comment: '产品介绍' })
-  introduction:string;
+  @Column({comment:'盲盒份数'})
+  num:number
+
+  @ManyToMany(() => Goods)
+  @JoinTable()
+  goods: Goods[];
 
   @OneToMany(()=>Order,undefined,{nullable:true})
   orders:Order[]

@@ -48,7 +48,7 @@ export class UserController{
       if (user.password===body.password){
           //传回用户信息
         const token=Math.random();
-        user.token=token.toString();
+        await this.userService.updateUser(user.id, {token:token.toString()})
         return {
           success: true,
           data:{token:token},//前端后端数据沟通使用保存在前端的密钥
@@ -68,14 +68,14 @@ export class UserController{
   }
 
   @Get('/admin')
-  async isAdministrator(){
+  async checkAdministrator(){
     const name = this.ctx.get('X-User-Name');
-    //const  token = this.ctx.get('X-User-Token');
+    const  token = this.ctx.get('X-User-Token');
     const user=await this.userService.getUserByName(name);
     if (user===null||user===undefined){
       throw new Error('用户不存在')
     }
-    if (user.isAdministrator){
+    if (user.isAdministrator&&user.token===token){
       return {success:true}
     }else {
       throw new Error('验证失败')

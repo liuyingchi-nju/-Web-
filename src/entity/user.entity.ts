@@ -16,7 +16,6 @@ export class User {
   @Column({nullable:true})
   token:string//登录密钥
 
-
   @OneToMany(()=> Order,undefined,{nullable:true})
   orders: Order[];
 
