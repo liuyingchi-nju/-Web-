@@ -1,4 +1,4 @@
-import {Inject, Controller, Init, Get, Options} from '@midwayjs/core';
+import {Inject, Controller, Init, Get, Options, Query} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import {BlindBoxService} from "../service/blindbox.service";
 import {GoodsService} from "../service/goods.service";
@@ -25,33 +25,53 @@ export class BlindBoxController{
     if (await this.blindBoxModel.count()===0) {
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒1',
-        avatarPath: '../data/pictures/nopicture.jpg',
+        avatarPath: '/pictures/nopicture.jpg',
         num: 3
       });
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒2',
-        avatarPath: '../data/pictures/nopicture.jpg',
+        avatarPath: '/pictures/1.jpg',
+        num: 3
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒3',
+        avatarPath: '/pictures/1.jpg',
+        num: 3
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒4',
+        avatarPath: '/pictures/1.jpg',
         num: 3
       });
     }
 
   }
 
-  @Get("/maininformation")
-  async getMainInformation(){
+  @Get("/information")
+  async getInformation(){
     const page=this.ctx.get('PAGE')
     return await this.blindBoxService.getBlindBoxesByPage(Number(page), 7, false)
   }
 
-  @Options('/maininformation')
+  @Options('/information')
   async MainInformation(){
     return {success:true};
   }
 
-  @Get("/allinformation")
-  async getAllInformation(){
-
+  @Get('/details')
+  async getDetails(@Query('id') id: string) {
+    if (!id) {
+      return { success: false, message: '缺少id参数' };
+    }
+    return await this.blindBoxService.getBlindBoxById(Number(id));
   }
+
+
+  @Options("/details")
+  async gAllInformation(){
+    return {success:true};
+  }
+
 
 
 }

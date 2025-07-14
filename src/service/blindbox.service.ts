@@ -23,6 +23,9 @@ export class BlindBoxService {
     num: number;
   }): Promise<BlindBox> {
     const blindBox = new BlindBox();
+    if (blindBoxData.avatarPath===undefined||blindBoxData.avatarPath===null){
+      blindBox.avatarPath='/pictures/nopicture.jpg'
+    }
     Object.assign(blindBox, blindBoxData);
     return await this.blindBoxModel.save(blindBox);
   }
