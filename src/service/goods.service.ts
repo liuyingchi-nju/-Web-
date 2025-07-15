@@ -1,4 +1,4 @@
-import { Provide } from '@midwayjs/core';
+import {Init, Provide} from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
 import { Repository } from 'typeorm';
 import { Goods } from '../entity/goods.entity';
@@ -7,6 +7,24 @@ import { Goods } from '../entity/goods.entity';
 export class GoodsService {
   @InjectEntityModel(Goods)
   goodsModel: Repository<Goods>;
+
+  @Init()
+  async initDefaultGoods() {
+    if (await this.goodsModel.count() === 0) {
+      await this.batchCreateGoods([
+        {name: "芒果TV月卡", avatarPath: "../data/pictures/mangotv.jpg"},
+        {name: "QQ音乐三天绿钻体验卡"},
+        {name: "bilibili大会员月卡"},
+        {name: "百度网盘不限速体验卡50张"},
+        {name: "三国杀移动版66宝珠兑换码"},
+        {name: "京东200元礼品卡"},
+        {name: "腾讯视频会员三折券"},
+        {name: "QQ音乐一天绿钻体验卡"},
+        {name: "QQ音乐绿钻月卡"}
+      ]);
+      console.log('默认商品数据初始化完成');
+    }
+  }
 
   /**
    * 创建商品

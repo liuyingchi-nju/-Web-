@@ -21,30 +21,34 @@ export class BlindBoxController{
   blindBoxModel: Repository<BlindBox>;
 
   @Init()
-  async initData(){
+  async init() {
+    await this.goodsService.initDefaultGoods();
     if (await this.blindBoxModel.count()===0) {
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒1',
-        avatarPath: '/pictures/nopicture.jpg',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
         num: 3
       });
+      await this.blindBoxService.addGoodToBlindBox(1,1);
+      await this.blindBoxService.addGoodToBlindBox(1,2);
+      await this.blindBoxService.addGoodToBlindBox(1,3);
+      await this.blindBoxService.addGoodToBlindBox(1,4);
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒2',
-        avatarPath: '/pictures/1.jpg',
+        avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
         num: 3
       });
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒3',
-        avatarPath: '/pictures/1.jpg',
+        avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
         num: 3
       });
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒4',
-        avatarPath: '/pictures/1.jpg',
+        avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
         num: 3
       });
     }
-
   }
 
   @Get("/information")
@@ -63,7 +67,7 @@ export class BlindBoxController{
     if (!id) {
       return { success: false, message: '缺少id参数' };
     }
-    return await this.blindBoxService.getBlindBoxById(Number(id));
+    return await this.blindBoxService.getBlindBoxById(Number(id),true);
   }
 
 
