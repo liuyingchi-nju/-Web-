@@ -4,7 +4,6 @@ import * as validate from '@midwayjs/validate';
 import * as info from '@midwayjs/info';
 import * as upload from '@midwayjs/upload';
 import * as typeorm from '@midwayjs/typeorm';
-import * as redis from '@midwayjs/redis';
 import { join } from 'path';
 // import { DefaultErrorFilter } from './filter/default.filter';
 // import { NotFoundFilter } from './filter/notfound.filter';
@@ -17,7 +16,6 @@ import { ReportMiddleware } from './middleware/report.middleware';
     validate,
     typeorm,
     upload,
-    redis,
     {
       component: info,
       enabledEnvironment: ['local'],
@@ -37,7 +35,7 @@ export class MainConfiguration {
     // 添加 CORS 中间件
     this.app.use(async (ctx, next) => {
       ctx.set('Access-Control-Allow-Origin', 'http://localhost:5173'); // 允许前端域名
-      ctx.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      ctx.set('Access-Control-Allow-Methods', 'GET, POST, PATCH,PUT, DELETE, OPTIONS');
       ctx.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Name,X-User-Token,PAGE');
       await next();
     });

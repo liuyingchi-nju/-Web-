@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Init, Inject, Options, Post} from "@midwayjs/core";
+import {Body, Controller, Get, Init, Inject, Options, Patch, Post} from "@midwayjs/core";
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
 
@@ -87,4 +87,19 @@ export class UserController{
     return { success: true }; // 直接返回 200
   }
 
+  @Patch('/balance')
+  async changeBalance(@Body() body: {
+    name: string;
+    amount: number;
+  },){
+    const user=await this.userService.getUserByName(body.name);
+    const newBalance=user.balance+body.amount;
+    await this.userService.updateUser(user.id,{balance: newBalance})
+    return {success:true,balance:newBalance}
+  }
+
+  @Options('/balance')
+  async balance(){
+    return {success: true}
+  }
 }

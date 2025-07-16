@@ -24,12 +24,5 @@ export default {
       }
     }
   },
-  redis: {
-    client: {
-      host: 'localhost', // Redis 服务器地址
-      port: 5173,       // Redis 端口
-      db:0,
-    },
-  },
 } as MidwayConfig;
 
