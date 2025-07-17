@@ -21,8 +21,12 @@ export class CommentService {
     comment.user = { id: commentData.userId } as User;
     comment.blindbox = { id: commentData.blindboxId } as BlindBox;
     comment.content = commentData.content;
-    comment.imagePaths = commentData.imagePaths || [];
-
+    if (commentData.imagePaths){
+     for (let i=0;i<commentData.imagePaths.length;i++){
+       commentData.imagePaths[i]='http://127.0.0.1:7001/pictures/'+commentData.imagePaths[i]
+     }
+    }
+    comment.imagePaths=commentData.imagePaths;
     return await this.commentModel.save(comment);
   }
 

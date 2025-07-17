@@ -21,6 +21,7 @@ export class BlindBoxService {
     name: string;
     avatarPath?: string;
     num: number;
+    price:number;
   }): Promise<BlindBox> {
     const blindBox = new BlindBox();
     if (blindBoxData.avatarPath===undefined||blindBoxData.avatarPath===null){

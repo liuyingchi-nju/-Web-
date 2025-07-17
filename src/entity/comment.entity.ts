@@ -10,13 +10,13 @@ export class Comment {
   @ManyToOne(() => User )
   user: User;
 
-  @Column('text', { array: true, nullable: true })
+  @Column( { type: 'simple-array',nullable: true })
   imagePaths: string[]; // 评论图片路径数组（允许为空）
 
   @ManyToOne(() => BlindBox)
   blindbox: BlindBox; // 添加与盲盒的关联
 
-  @Column({ type: 'text' })
+  @Column({nullable:true})
   content: string; // 评论文字内容（可选）
 
   @CreateDateColumn()

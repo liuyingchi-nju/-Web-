@@ -1,4 +1,4 @@
-import { Inject, Controller, Post, Body } from '@midwayjs/core';
+import {Inject, Controller, Post, Body, Options} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import { OrderService } from "../service/order.service";
 import { BlindBoxService } from "../service/blindbox.service";
@@ -22,7 +22,7 @@ export class OrderController {
   private mutex = new Mutex();
 
   @Post('/')
-  async postOrder(@Body() body: { name: string, id: number }) {
+  async postOrder(@Body() body: { name: string, id: number ,price:number}) {
     const { name, id } = body;
 
     await this.mutex.lock();
@@ -37,7 +37,7 @@ export class OrderController {
       if (!blindBox) throw new Error('盲盒不存在');
       if (blindBox.num <= 0) throw new Error('该盲盒已售罄');
 
-      const blindBoxPrice = 100;
+      const blindBoxPrice = body.price;
       if (user.balance < blindBoxPrice) throw new Error('余额不足');
 
       const order = await this.orderService.createOrder(user, blindBoxPrice);
@@ -64,5 +64,10 @@ export class OrderController {
     } finally {
       this.mutex.unlock();
     }
+  }
+
+  @Options('/')
+  async creat(){
+    return{success:true};
   }
 }

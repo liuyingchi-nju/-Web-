@@ -1,4 +1,4 @@
-import {Body, Controller, Files, Get, Inject, Options, Post, Query} from '@midwayjs/core';
+import { Controller, Fields, Files, Get, Inject, Options, Post, Query} from '@midwayjs/core';
 import {Context} from "@midwayjs/koa";
 import {PicturesService} from "../service/pictures.service";
 import {UserService} from "../service/user.service";
@@ -26,20 +26,25 @@ export class CommentController {
   }
 
   @Post('/')
-  async creatComment(@Body() body: {userName:string,content:string,blindBoxId:number,},
-  @Files() files){
-    const user = await this.userService.getUserByName(body.userName);
-    if (!user) {
-      throw new Error('用户不存在');
+  async createComment(
+    @Files() files: Array<{ filename: string; data: Buffer; fieldName: string }>,
+    @Fields() fields: { content?: string; userName: string; blindBoxId: string }
+  ) {
+    // 1. 处理图片上传
+    let imagePaths: string[] = [];
+    if (files && files.length > 0) {
+      const images = files.filter(f => f.fieldName === 'images');
+      imagePaths = await this.picturesService.savePictures(images);
     }
-    const userId=user.id;
-    let newPictureName =await this.picturesService.saveMultiplePictures(files);
-    const basePath='http://127.0.0.1:7001/pictures/';
-    /*for (let i=0;i<newPictureName.length;i++) {
-      newPictureName[i]=basePath+newPictureName[i]
-    }*/
-    newPictureName = newPictureName.map(filename => basePath + filename);
-    await this.commentService.createComment({userId:userId,blindboxId:body.blindBoxId,imagePaths:newPictureName});
+    // 2. 创建评论
+    const comment = await this.commentService.createComment({
+      userId: (await this.userService.getUserByName(fields.userName)).id,// 假设 userName 是用户ID
+      blindboxId: parseInt(fields.blindBoxId),
+      content: fields.content,
+      imagePaths,
+    });
+
+    return { success: true, data: comment };
   }
 
   @Get('/')

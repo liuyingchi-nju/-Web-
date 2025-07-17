@@ -27,7 +27,8 @@ export class BlindBoxController{
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒1',
         avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
-        num: 3
+        num: 3,
+        price:100
       });
       await this.blindBoxService.addGoodToBlindBox(1,1);
       await this.blindBoxService.addGoodToBlindBox(1,2);
@@ -36,17 +37,20 @@ export class BlindBoxController{
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒2',
         avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
-        num: 3
+        num: 3,
+        price:100,
       });
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒3',
         avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
-        num: 3
+        num: 3,
+        price:100
       });
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒4',
         avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
-        num: 3
+        num: 3,
+        price:100,
       });
     }
   }

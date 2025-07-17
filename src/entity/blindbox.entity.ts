@@ -17,6 +17,9 @@ export class BlindBox {
   @Column({comment:'盲盒份数'})
   num:number
 
+  @Column({comment:'价格'})
+  price:number
+
   @ManyToMany(() => Goods)
   @JoinTable()
   goods: Goods[];

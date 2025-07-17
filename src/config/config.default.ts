@@ -5,12 +5,17 @@ import {Order} from "../entity/order.entity";
 import {BlindBox} from "../entity/blindbox.entity";
 import {Goods} from "../entity/goods.entity";
 import {Comment} from "../entity/comment.entity";
+import {join} from "path";
 
 export default {
   // use for cookie sign key, should change to your own and keep security
   keys: '1752053420718_9159',
   koa: {
     port: 7001,
+    multipart: {
+      mode: 'file',
+      uploadDir: join(__dirname, '../data/pictures'),
+    },
   },
   typeorm: {
     dataSource: {

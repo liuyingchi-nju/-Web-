@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Init, Inject, Options, Patch, Post} from "@midwayjs/core";
+import {Body, Controller, Get, Init, Inject, Options, Patch, Post, Query} from "@midwayjs/core";
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
 
@@ -96,6 +96,12 @@ export class UserController{
     const newBalance=user.balance+body.amount;
     await this.userService.updateUser(user.id,{balance: newBalance})
     return {success:true,balance:newBalance}
+  }
+
+  @Get('/balance')
+  async getBalance(@Query('name') name: string){
+    const user=await this.userService.getUserByName(name);
+    return {success:true,balance:user.balance}
   }
 
   @Options('/balance')
