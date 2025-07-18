@@ -93,15 +93,20 @@ export class UserController{
     amount: number;
   },){
     const user=await this.userService.getUserByName(body.name);
-    const newBalance=user.balance+body.amount;
+    const newBalance=parseFloat((user.balance +body.amount).toFixed(2));
     await this.userService.updateUser(user.id,{balance: newBalance})
-    return {success:true,balance:newBalance}
+    const newUser=await this.userService.getUserByName(body.name)
+    return {success:true,balance:newUser.balance}
   }
 
-  @Get('/balance')
-  async getBalance(@Query('name') name: string){
-    const user=await this.userService.getUserByName(name);
-    return {success:true,balance:user.balance}
+  @Get('/')
+  async getUser(@Query('name') name: string){
+    return await this.userService.getUserByName(name);
+  }
+
+  @Options('/')
+  async ser (){
+    return {success:true}
   }
 
   @Options('/balance')

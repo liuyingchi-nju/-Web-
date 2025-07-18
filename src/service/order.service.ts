@@ -13,12 +13,14 @@ export class OrderService {
    * 创建新订单
    * @param user 用户实体
    * @param money 订单金额
+   * @param blindBoxId
    * @returns 新创建的订单
    */
-  async createOrder(user: User, money: number): Promise<Order> {
+  async createOrder(user: User, money: number, blindBoxId:number): Promise<Order> {
     const order = new Order();
     order.user = user;
     order.money = money;
+    order.blindBoxId=blindBoxId;
     order.isDone = false; // 默认未完成
     return await this.orderModel.save(order);
   }

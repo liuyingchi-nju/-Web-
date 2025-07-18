@@ -19,7 +19,7 @@ export class User {
   @OneToMany(()=> Order,undefined,{nullable:true})
   orders: Order[];
 
-  @Column()
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   balance:number;//用户余额
 
   @Column()

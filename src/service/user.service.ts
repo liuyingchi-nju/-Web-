@@ -14,7 +14,7 @@ export class UserService {
     user.name=name;
     user.password=password;
     user.isVIP=false;
-    user.balance=0.0;
+    user.balance=0.00;
     user.isAdministrator=true;
     return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
   }
@@ -25,7 +25,7 @@ export class UserService {
     user.name=name;
     user.password=password;
     user.isVIP=false;
-    user.balance=0.0;
+    user.balance=0.00;
     user.isAdministrator=false;
     return await this.userRepo.save(user);//将实体实例持久化到数据库，并返回保存后的完整实体
   }

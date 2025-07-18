@@ -1,4 +1,4 @@
-import {Inject, Controller, Post, Body, Options} from '@midwayjs/core';
+import {Inject, Controller, Post, Body, Options, Get, Query} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import { OrderService } from "../service/order.service";
 import { BlindBoxService } from "../service/blindbox.service";
@@ -24,9 +24,7 @@ export class OrderController {
   @Post('/')
   async postOrder(@Body() body: { name: string, id: number ,price:number}) {
     const { name, id } = body;
-
     await this.mutex.lock();
-
     try {
       const [user, blindBox] = await Promise.all([
         this.userService.getUserByName(name),
@@ -40,13 +38,11 @@ export class OrderController {
       const blindBoxPrice = body.price;
       if (user.balance < blindBoxPrice) throw new Error('余额不足');
 
-      const order = await this.orderService.createOrder(user, blindBoxPrice);
+      const order = await this.orderService.createOrder(user, blindBoxPrice,id);
       blindBox.num -= 1;
       await this.blindBoxService.blindBoxModel.save(blindBox);
-
       user.balance -= blindBoxPrice;
       await this.userService.userRepo.save(user);
-
       return {
         success: true,
         message: '购买成功',
@@ -69,5 +65,14 @@ export class OrderController {
   @Options('/')
   async creat(){
     return{success:true};
+  }
+
+  @Get('/')
+  async getOrders(@Query('name') name: string){
+    if (!name){
+      return {success: false,message:'登录状态异常'};
+    }
+    const user=await this.userService.getUserByName(name)
+    return await this.orderService.getUserOrders(user)
   }
 }

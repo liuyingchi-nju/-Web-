@@ -3,6 +3,7 @@ import {Context} from "@midwayjs/koa";
 import {PicturesService} from "../service/pictures.service";
 import {UserService} from "../service/user.service";
 import {CommentService} from "../service/comment.service";
+import {OrderService} from "../service/order.service";
 
 @Controller('/comment')
 export class CommentController {
@@ -19,7 +20,8 @@ export class CommentController {
   @Inject()
   commentService:CommentService
 
-
+  @Inject()
+  orderService:OrderService
   @Options('/')
   async creat(){
     return {success:true};
@@ -52,4 +54,21 @@ export class CommentController {
     return await this.commentService.getCommentsByBlindBoxId(blindboxId);
   }
 
+  @Get('/permission')
+  async getPermission(@Query('blindboxId') blindboxId: number,
+                      @Query('name') name: string){
+    const user=await this.userService.getUserByName(name);
+    const orderList=await this.orderService.getUserOrders(user);
+    for (let i=0;i<orderList.length;i++){
+      if (orderList[i].blindBoxId===blindboxId){
+        return {success:true}
+      }
+    }
+    return {success:false}
+  }
+
+  @Options('/permission')
+  async Permission(){
+    return {success :true}
+  }
 }

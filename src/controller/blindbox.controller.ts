@@ -52,12 +52,41 @@ export class BlindBoxController{
         num: 3,
         price:100,
       });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒5',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        num: 3,
+        price:100
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒6',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        num: 3,
+        price:100
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒7',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        num: 3,
+        price:100
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒8',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        num: 3,
+        price:100
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '应用福利盲盒9',
+        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        num: 3,
+        price:100
+      });
     }
   }
 
   @Get("/information")
-  async getInformation(){
-    const page=this.ctx.get('PAGE')
+  async getInformation(@Query('page') page:number){
     return await this.blindBoxService.getBlindBoxesByPage(Number(page), 7, false)
   }
 

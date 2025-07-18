@@ -16,4 +16,7 @@ export class Order {
 
   @Column()
   money: number//订单金额
+
+  @Column()
+  blindBoxId:number
 }
