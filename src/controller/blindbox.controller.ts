@@ -27,7 +27,7 @@ export class BlindBoxController{
       await this.blindBoxService.createBlindBox({
         name: '应用福利盲盒1',
         avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
-        num: 3,
+        num: 150,
         price:100
       });
       await this.blindBoxService.addGoodToBlindBox(1,1);
@@ -109,6 +109,17 @@ export class BlindBoxController{
     return {success:true};
   }
 
+  @Get("/specialinformation")
+  async searchBlindBoxes(
+    @Query('keyword') keyword: string,
+    @Query('page') page: number = 1
+  ) {
+    return await this.blindBoxService.searchBlindBoxes(keyword, Number(page));
+  }
 
+  @Options('/specialinformation')
+  async searchOptions() {
+    return { success: true };
+  }
 
 }

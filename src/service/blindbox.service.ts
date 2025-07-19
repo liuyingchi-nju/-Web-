@@ -109,4 +109,44 @@ export class BlindBoxService {
       totalPages: Math.ceil(total / pageSize)
     };
   }
+
+  /**
+   * 搜索盲盒（按名称或包含的商品名称）
+   * @param keyword 搜索关键词
+   * @param page 页码
+   * @param pageSize 每页数量
+   */
+  async searchBlindBoxes(
+    keyword: string,
+    page: number = 1,
+    pageSize: number = 7
+  ): Promise<{
+    data: BlindBox[];
+    currentPage: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  }> {
+    page = Math.max(1, page);
+    const queryBuilder = this.blindBoxModel
+      .createQueryBuilder('blindBox')
+      .leftJoinAndSelect('blindBox.goods', 'goods')
+      .where('blindBox.name LIKE :keyword', { keyword: `%${keyword}%` })
+      .orWhere('goods.name LIKE :keyword', { keyword: `%${keyword}%` })
+      .orderBy('blindBox.id', 'ASC');
+    const total = await queryBuilder.getCount();
+    const data = await queryBuilder
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+    return {
+      data,
+      currentPage: page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
 }
+
+

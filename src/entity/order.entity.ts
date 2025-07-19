@@ -19,4 +19,7 @@ export class Order {
 
   @Column()
   blindBoxId:number
+
+  @Column()
+  content:string;//开出的物品
 }

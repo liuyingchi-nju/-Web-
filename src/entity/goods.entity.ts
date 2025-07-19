@@ -1,7 +1,8 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToMany,} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, ManyToMany, Index,} from 'typeorm';
 import {BlindBox} from "./blindbox.entity";
 
 @Entity()
+@Index(['name'])
 export class Goods {
   @PrimaryGeneratedColumn({comment:'货物唯一ID'})
   id: number;
@@ -15,4 +16,5 @@ export class Goods {
 
   @ManyToMany(() => BlindBox, blindBox => blindBox.goods,{nullable:true})
   blindBoxes: BlindBox[];
+
 }

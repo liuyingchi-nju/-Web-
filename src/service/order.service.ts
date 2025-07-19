@@ -1,14 +1,17 @@
-import { Provide } from '@midwayjs/core';
+import {Inject, Provide} from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from '../entity/order.entity';
 import type { User } from '../entity/user.entity';
+import {BlindBoxService} from "./blindbox.service";
 
 @Provide()
 export class OrderService {
   @InjectEntityModel(Order)
   orderModel: Repository<Order>;
 
+  @Inject()
+  blindBoxService:BlindBoxService;
   /**
    * 创建新订单
    * @param user 用户实体
@@ -21,7 +24,10 @@ export class OrderService {
     order.user = user;
     order.money = money;
     order.blindBoxId=blindBoxId;
+    const blindBox=await this.blindBoxService.getBlindBoxById(blindBoxId,true);
     order.isDone = false; // 默认未完成
+    const choice=Math.floor(Math.random()*blindBox.goods.length);
+    order.content=(blindBox.goods[choice]).name;
     return await this.orderModel.save(order);
   }
 

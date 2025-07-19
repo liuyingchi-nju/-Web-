@@ -46,10 +46,7 @@ export class OrderController {
       return {
         success: true,
         message: '购买成功',
-        data: {
-          orderId: order.id,
-          remaining: blindBox.num
-        }
+        order:order,
       };
     } catch (error) {
       this.ctx.status = 400;

@@ -1,8 +1,9 @@
-import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable, Index} from 'typeorm';
 import {Order} from "./order.entity";
 import {Goods} from "./goods.entity";
 
 @Entity()
+@Index(['name'])
 export class BlindBox {
   @PrimaryGeneratedColumn({comment:'盲盒唯一ID'})
   id: number;
