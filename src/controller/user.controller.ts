@@ -13,10 +13,12 @@ export class UserController{
 
   @Init()
   async initData() {
-    await this.userService.createAdmin("root", "root");//创建管理员
+    if (await this.userService.userRepo.count()===0){
+      await this.userService.createAdmin("root", "root");//创建管理员
+    }
   }
 
-  @Post('/register')
+  @Post('/')
   async register(@Body() body: { name: string, password: string }) {
     const checking=await this.userService.getUserByName(body.name);
     if (checking===undefined||checking===null) {
@@ -26,15 +28,6 @@ export class UserController{
     throw new Error('用户名已存在');
   }
 
-  @Post('/admin')
-  async check(@Body() body: { name: string, password: string }) {
-    const checking=await this.userService.getUserByName(body.name);
-    if (checking===undefined||checking===null) {
-      await this.userService.createUser(body.name, body.password);
-      return {success: true,message:"注册成功"}
-    }
-    throw new Error('用户名已存在');
-  }
 
   @Options('/register')
   async handleOptionsRegister() {
@@ -112,5 +105,27 @@ export class UserController{
   @Options('/balance')
   async balance(){
     return {success: true}
+  }
+
+  @Patch('/role')
+  async changeRole(@Body() body: {name: string,token: string}){
+    const user=await this.userService.getUserByName(body.name);
+    if (user.token.toString()!==body.token.toString()){
+      console.log(`user.token：${user.token}`+` body.token: ${body.token}`)
+      throw new Error("登录状态异常")
+    }else {
+      if (user.balance>=288){
+        const balance=user.balance;
+        await this.userService.updateUser(user.id,{balance:balance-288,isVIP:true})
+        return {success: true,message:"操作成功,您已成为永久VIP!"}
+      } else {
+        return{success:true,message:"余额不足，请先充值"}
+      }
+    }
+  }
+
+  @Options('/role')
+  async role(){
+    return{success:true}
   }
 }
