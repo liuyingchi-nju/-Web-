@@ -1,4 +1,3 @@
-// blindbox.service.ts
 import { Provide } from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
 import { Repository } from 'typeorm';
@@ -146,6 +145,15 @@ export class BlindBoxService {
       total,
       totalPages: Math.ceil(total / pageSize)
     };
+  }
+
+  /**
+   * 更新盲盒属性
+   * @param id 盲盒ID
+   * @param updates
+   */
+  async updateBlindBox(id: number, updates: Partial<BlindBox>) {
+    await this.blindBoxModel.update(id, updates);
   }
 }
 

@@ -1,4 +1,4 @@
-import {Inject, Controller, Init, Get, Options, Query} from '@midwayjs/core';
+import {Inject, Controller, Init, Get, Options, Query, Body, Put} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import {BlindBoxService} from "../service/blindbox.service";
 import {GoodsService} from "../service/goods.service";
@@ -122,4 +122,34 @@ export class BlindBoxController{
     return { success: true };
   }
 
+  @Put('/price')
+  async editPrice(@Body() body: {id: number ,price:number}){
+    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+    if (blindBox===null||blindBox===undefined){
+      throw new Error("找不到该id的盲盒")
+    }
+    await this.blindBoxService.updateBlindBox(body.id,{price:body.price})
+    return {success:true};
+  }
+
+  @Options('/price')
+  async priceOptions() {
+    return { success: true };
+  }
+
+
+  @Put('/num')
+  async editNum(@Body() body: {id: number ,num:number}){
+    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+    if (blindBox===null||blindBox===undefined){
+      throw new Error("找不到该id的盲盒")
+    }
+    await this.blindBoxService.updateBlindBox(body.id,{num:body.num})
+    return {success:true};
+  }
+
+  @Options('/num')
+  async numOptions() {
+    return { success: true };
+  }
 }
