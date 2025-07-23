@@ -19,7 +19,7 @@ export class CommentService {
   }) {
     const comment = new Comment();
     comment.user = { id: commentData.userId } as User;
-    comment.blindbox = { id: commentData.blindboxId } as BlindBox;
+    comment.blindBox = { id: commentData.blindboxId } as BlindBox;
     comment.content = commentData.content;
     if (commentData.imagePaths){
      for (let i=0;i<commentData.imagePaths.length;i++){
@@ -39,7 +39,7 @@ export class CommentService {
   // 3. 获取盲盒的所有评论（不分页）
   async getCommentsByBlindBoxId(blindboxId: number) {
     return await this.commentModel.find({
-      where: { blindbox: { id: blindboxId } },
+      where: { blindBox: { id: blindboxId } },
       relations: ['user'], // 关联用户信息
       order: { createdAt: 'DESC' } // 按时间倒序
     });

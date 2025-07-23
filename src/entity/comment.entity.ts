@@ -14,7 +14,7 @@ export class Comment {
   imagePaths: string[]; // 评论图片路径数组（允许为空）
 
   @ManyToOne(() => BlindBox)
-  blindbox: BlindBox; // 添加与盲盒的关联
+  blindBox: BlindBox; // 添加与盲盒的关联
 
   @Column({nullable:true})
   content: string; // 评论文字内容（可选）

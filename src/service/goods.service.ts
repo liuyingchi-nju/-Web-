@@ -12,7 +12,7 @@ export class GoodsService {
   async initDefaultGoods() {
     if (await this.goodsModel.count() === 0) {
       await this.batchCreateGoods([
-        {name: "芒果TV月卡", avatarPath: "../data/pictures/mangotv.jpg"},
+        {name: "芒果TV月卡"},
         {name: "QQ音乐三天绿钻体验卡"},
         {name: "bilibili大会员月卡"},
         {name: "百度网盘不限速体验卡50张"},
@@ -41,12 +41,12 @@ export class GoodsService {
    * @param page 页码
    * @param limit 每页数量
    */
-  async getAllGoods(page = 1, limit = 10): Promise<{ data: Goods[]; count: number }> {
-    const [data, count] = await this.goodsModel.findAndCount({
+  async getAllGoods(page = 1, limit = 10): Promise<{ data: Goods[]; totalPages: number }> {
+    const [data, total] = await this.goodsModel.findAndCount({
       skip: (page - 1) * limit,
       take: limit
     });
-    return { data, count };
+    return { data, totalPages: Math.ceil(total / limit) };
   }
 
   /**
@@ -89,15 +89,6 @@ export class GoodsService {
     });
 
     return await this.goodsModel.save(goodsEntities);
-  }
-
-  /**
-   * 上传商品图片
-   * @param id 商品ID
-   * @param avatarPath 图片路径
-   */
-  async uploadGoodsAvatar(id: number, avatarPath: string): Promise<Goods> {
-    return await this.updateGoods(id, { avatarPath });
   }
 
   /**

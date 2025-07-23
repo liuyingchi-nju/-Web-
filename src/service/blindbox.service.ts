@@ -3,6 +3,7 @@ import { InjectEntityModel } from '@midwayjs/typeorm';
 import { Repository } from 'typeorm';
 import { BlindBox } from '../entity/blindbox.entity';
 import { Goods } from '../entity/goods.entity';
+import {Comment} from "../entity/comment.entity";
 
 @Provide()
 export class BlindBoxService {
@@ -11,6 +12,10 @@ export class BlindBoxService {
 
   @InjectEntityModel(Goods)
   goodsModel: Repository<Goods>;
+
+  @InjectEntityModel(Comment)
+  commentModel: Repository<Comment>;
+
 
   /**
    * 创建盲盒
@@ -35,6 +40,17 @@ export class BlindBoxService {
    * @param id 盲盒ID
    */
   async deleteBlindBox(id: number): Promise<boolean> {
+    // 1. 删除关联评论
+    await this.commentModel.createQueryBuilder()
+      .delete()
+      .where("blindboxId = :id", { id })
+      .execute();
+    // 2. 清空商品关联
+    await this.blindBoxModel.createQueryBuilder()
+      .relation(BlindBox, 'goods')
+      .of(id)
+      .remove([]);
+    // 3. 删除盲盒
     const result = await this.blindBoxModel.delete(id);
     return result.affected > 0;
   }
@@ -109,6 +125,26 @@ export class BlindBoxService {
     };
   }
 
+
+
+  /**
+   * 检查 Goods 是否在 BlindBox 中
+   * @param blindBoxId 盲盒ID
+   * @param goodsId 商品ID
+   */
+  async isGoodsInBlindBox(blindBoxId: number, goodsId: number): Promise<boolean> {
+    const blindBox = await this.blindBoxModel.findOne({
+      where: { id: blindBoxId },
+      relations: ['goods'], // 加载关联的 goods
+    });
+
+    if (!blindBox || !blindBox.goods) {
+      return false;
+    }
+
+    return blindBox.goods.some(g => g.id === goodsId);
+  }
+
   /**
    * 搜索盲盒（按名称或包含的商品名称）
    * @param keyword 搜索关键词
@@ -145,6 +181,26 @@ export class BlindBoxService {
       total,
       totalPages: Math.ceil(total / pageSize)
     };
+  }
+
+
+  async removeGoodsFromBlindBox(blindBoxId: number, goodsId: number): Promise<BlindBox> {
+    // Find the blind box with the goods relation loaded
+    const blindBox = await this.blindBoxModel.findOne({
+      where: { id: blindBoxId },
+      relations: ['goods'],
+    });
+    if (!blindBox) {
+      throw new Error('BlindBox not found');
+    }
+    const goodsToRemove = await this.goodsModel.findOne({
+      where: { id: goodsId },
+    });
+    if (!goodsToRemove) {
+      throw new Error('Goods not found');
+    }
+    blindBox.goods = blindBox.goods.filter(goods => goods.id !== goodsId);
+    return await this.blindBoxModel.save(blindBox);
   }
 
   /**

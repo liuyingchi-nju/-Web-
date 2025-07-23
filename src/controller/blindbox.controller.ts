@@ -1,10 +1,25 @@
-import {Inject, Controller, Init, Get, Options, Query, Body, Put} from '@midwayjs/core';
+import {
+  Inject,
+  Controller,
+  Init,
+  Get,
+  Options,
+  Query,
+  Body,
+  Put,
+  Patch,
+  Post,
+  Files,
+  Fields,
+  Del
+} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import {BlindBoxService} from "../service/blindbox.service";
 import {GoodsService} from "../service/goods.service";
 import {InjectEntityModel} from "@midwayjs/typeorm";
 import {Repository} from "typeorm";
 import { BlindBox } from '../entity/blindbox.entity';
+import {PicturesService} from "../service/pictures.service";
 
 @Controller("/blindbox")
 export class BlindBoxController{
@@ -19,6 +34,9 @@ export class BlindBoxController{
 
   @InjectEntityModel(BlindBox)
   blindBoxModel: Repository<BlindBox>;
+
+  @Inject()
+  picturesService:PicturesService
 
   @Init()
   async init() {
@@ -104,6 +122,7 @@ export class BlindBoxController{
   }
 
 
+
   @Options("/details")
   async gAllInformation(){
     return {success:true};
@@ -112,7 +131,7 @@ export class BlindBoxController{
   @Get("/specialinformation")
   async searchBlindBoxes(
     @Query('keyword') keyword: string,
-    @Query('page') page: number = 1
+    @Query('page') page: number,
   ) {
     return await this.blindBoxService.searchBlindBoxes(keyword, Number(page));
   }
@@ -120,6 +139,43 @@ export class BlindBoxController{
   @Options('/specialinformation')
   async searchOptions() {
     return { success: true };
+  }
+
+  @Post('/')
+  async createBlindBox(
+    @Files() files: Array<{ filename: string; data: Buffer; fieldName: string }>,
+    @Fields() fields: { name: string; price: string; num: string }
+  ) {
+    let avatarPath = 'http://127.0.0.1:7001/pictures/nopicture.jpg';
+    if (files && files.length > 0) {
+      const avatarFile = files.find(f => f.fieldName === 'avatar');
+      if (avatarFile) {
+        const [savedFileName] = await this.picturesService.savePictures([avatarFile]);
+        avatarPath = `http://127.0.0.1:7001/pictures/${savedFileName}`;
+      }
+    }
+    await this.blindBoxService.createBlindBox({
+      name: fields.name,
+      price: Number(fields.price),
+      num: Number(fields.num),
+      avatarPath
+    });
+    return { success: true };
+  }
+
+  @Options('/')
+  async creatOptions() {
+    return { success: true };
+  }
+
+  @Del('/')
+  async deleteBlindBox(@Query('id') id:number){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id);
+    if (blindBox===null||blindBox===undefined){
+      throw new Error("找不到该id的盲盒")
+    }
+    await this.blindBoxService.deleteBlindBox(id);
+    return {success: true};
   }
 
   @Put('/price')
@@ -151,5 +207,50 @@ export class BlindBoxController{
   @Options('/num')
   async numOptions() {
     return { success: true };
+  }
+
+  @Put('/name')
+  async editName(@Body() body: {id: number ,name:string}){
+    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+    if (blindBox===null||blindBox===undefined){
+      throw new Error("找不到该id的盲盒")
+    }
+    await this.blindBoxService.updateBlindBox(body.id,{name:body.name})
+    return {success:true};
+  }
+
+  @Options('/name')
+  async nameOptions() {
+    return { success: true };
+  }
+
+  @Get('/goods')
+  async getGoods(@Query('id') id:number){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id,true);
+    return {success:true,data:blindBox.goods}
+  }
+
+  @Options('/goods')
+  async goodsOptions() {
+    return { success: true };
+  }
+
+  @Patch('/goods')
+  async removeGoods(@Body() body:{blindBoxId:number,goodsId:number,isExist:boolean}){
+    const blindBox=await this.blindBoxService.getBlindBoxById(body.blindBoxId);
+    if (blindBox===null||blindBox===undefined){
+      throw new Error("盲盒不存在");
+    }
+    const result=await this.blindBoxService.isGoodsInBlindBox(body.blindBoxId,body.goodsId);
+    if (body.isExist!==result){
+      throw new Error("非法参数")
+    }else {
+      if (body.isExist){
+        await this.blindBoxService.removeGoodsFromBlindBox(body.blindBoxId,body.goodsId);
+      }else {
+        await this.blindBoxService.addGoodToBlindBox(body.blindBoxId,body.goodsId);
+      }
+      return {success:true};
+    }
   }
 }
