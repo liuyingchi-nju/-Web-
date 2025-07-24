@@ -10,6 +10,9 @@ export class Goods {
   @Column({ comment: '货物名称' })
   name: string;
 
+  @Column({ nullable: true, comment: '图像路径' })
+  avatarPath: string;
+
   @ManyToMany(() => BlindBox, blindBox => blindBox.goods,{nullable:true})
   blindBoxes: BlindBox[];
 

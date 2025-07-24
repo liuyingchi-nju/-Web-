@@ -1,12 +1,16 @@
 import {Body, Controller, Get, Init, Inject, Options, Patch, Post, Query} from "@midwayjs/core";
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
+import {OrderService} from "../service/order.service";
 
 @Controller('/user')
 export class UserController{
 
   @Inject()
   ctx: Context;
+
+  @Inject()
+  orderService: OrderService;
 
   @Inject()
   userService: UserService;
@@ -127,5 +131,22 @@ export class UserController{
   @Options('/role')
   async role(){
     return{success:true}
+  }
+
+  @Get('/order')
+  async getOrders(@Query('name') name: string){
+    if (!name){
+      return {success: false,message:'登录状态异常'};
+    }
+    const user=await this.userService.getUserByName(name)
+    if (user===null||user===undefined){
+      throw new Error("用户不存在");
+    }
+    return await this.orderService.getUserOrders(user)
+  }
+
+  @Options('/order')
+  async orderOption(){
+    return {success:true};
   }
 }

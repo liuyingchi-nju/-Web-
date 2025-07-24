@@ -114,11 +114,16 @@ export class BlindBoxController{
   }
 
   @Get('/details')
-  async getDetails(@Query('id') id: string) {
+  async getDetails(@Query('id') id: number) {
     if (!id) {
       return { success: false, message: '缺少id参数' };
     }
-    return await this.blindBoxService.getBlindBoxById(Number(id),true);
+    const blindBox=await this.blindBoxService.getBlindBoxById(id,true);
+    if (blindBox===undefined||blindBox===null){
+      throw new Error("盲盒信息不存在");
+    }else{
+      return blindBox;
+    }
   }
 
 

@@ -12,7 +12,7 @@ export class GoodsService {
   async initDefaultGoods() {
     if (await this.goodsModel.count() === 0) {
       await this.batchCreateGoods([
-        {name: "芒果TV月卡"},
+        {name: "芒果TV月卡",avatarPath:"http://127.0.0.1:7001/pictures/mangotv.jpg"},
         {name: "QQ音乐三天绿钻体验卡"},
         {name: "bilibili大会员月卡"},
         {name: "百度网盘不限速体验卡50张"},

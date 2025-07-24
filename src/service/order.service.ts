@@ -25,9 +25,11 @@ export class OrderService {
     order.money = money;
     order.blindBoxId=blindBoxId;
     const blindBox=await this.blindBoxService.getBlindBoxById(blindBoxId,true);
-    order.isDone = false; // 默认未完成
+    order.isDone = false;
+    order.isReceived=false;
+    order.isSent=false;
     const choice=Math.floor(Math.random()*blindBox.goods.length);
-    order.content=(blindBox.goods[choice]).name;
+    order.goods=blindBox.goods[choice];
     return await this.orderModel.save(order);
   }
 
@@ -36,8 +38,11 @@ export class OrderService {
    * @param id 订单ID
    * @returns 订单实体或undefined
    */
-  async getOrderById(id: number): Promise<Order|undefined|null> {
-    return await this.orderModel.findOne({ where: { id } });
+  async getOrderById(id: number): Promise<Order | undefined | null> {
+    return await this.orderModel.findOne({
+      where: { id },
+      relations: ['goods']
+    });
   }
 
   /**
@@ -48,6 +53,7 @@ export class OrderService {
   async getUserOrders(user: User): Promise<Order[]> {
     return await this.orderModel.find({
       where: { user },
+      relations: ['goods'],
       order: { createdAt: 'DESC' } // 按创建时间降序
     });
   }
@@ -55,14 +61,15 @@ export class OrderService {
   /**
    * 更新订单状态
    * @param id 订单ID
-   * @param isDone 是否完成
+   * @param updates
    * @returns 更新后的订单
    */
-  async updateOrderStatus(id: number, isDone: boolean): Promise<Order | undefined> {
+  async updateOrderStatus(id: number, updates: Partial<Order>) {
     const order = await this.orderModel.findOne({ where: { id } });
-    if (!order) return undefined;
-    order.isDone = isDone;
-    return await this.orderModel.save(order);
+    if (order===null||order===undefined){
+      throw new Error("订单不存在")
+    }
+    await this.orderModel.update(id,updates);
   }
 
   /**
@@ -99,5 +106,32 @@ export class OrderService {
       .where('order.userId = :userId', { userId })
       .getRawOne();
     return parseFloat(result?.total) || 0;
+  }
+
+  /**
+   * 获取所有未发货的订单（带分页）
+   * @param page 当前页码
+   * @param pageSize 每页数量
+   * @returns 分页结果
+   */
+  async getUnsentOrders(page: number = 1, pageSize: number = 10): Promise<{
+    orders: Order[],
+    total: number
+  }> {
+    const skip = (page - 1) * pageSize;
+    const [orders, total] = await Promise.all([
+      this.orderModel.find({
+        where: { isSent: false },
+        relations: ['user', 'goods'],
+        order: { createdAt: 'ASC' },
+        skip,
+        take: pageSize
+      }),
+      this.orderModel.count({ where: { isSent: false } })
+    ]);
+    return {
+      orders,
+      total
+    };
   }
 }

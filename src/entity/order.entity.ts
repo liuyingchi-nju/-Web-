@@ -1,5 +1,6 @@
 import {Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne} from 'typeorm';
 import {User} from './user.entity'
+import {Goods} from "./goods.entity";
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
@@ -14,12 +15,18 @@ export class Order {
   @Column()
   isDone: boolean;//订单状态
 
+   @Column()
+  isReceived: boolean;//订单状态
+
+  @Column()
+  isSent: boolean;//订单状态
+
   @Column()
   money: number//订单金额
 
   @Column()
   blindBoxId:number
 
-  @Column()
-  content:string;//开出的物品
+  @ManyToOne(()=>Goods,undefined,{nullable:true})
+  goods: Goods
 }
