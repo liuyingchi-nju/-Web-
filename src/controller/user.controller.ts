@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Init, Inject, Options, Patch, Post, Query} from "@midwayjs/core";
+import {Body, Controller, Del, Get, Init, Inject, Options, Patch, Post, Query} from "@midwayjs/core";
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
 import {OrderService} from "../service/order.service";
@@ -19,6 +19,16 @@ export class UserController{
   async initData() {
     if (await this.userService.userRepo.count()===0){
       await this.userService.createAdmin("root", "root");//创建管理员
+      await this.userService.createUser("1","1")
+      await this.userService.createUser("2","2")
+      await this.userService.createUser("3","3")
+      await this.userService.createUser("4","4")
+      await this.userService.createUser("5","5")
+      await this.userService.createUser("6","6")
+      await this.userService.createUser("7","7")
+      await this.userService.createUser("8","8")
+      await this.userService.createUser("9","9")
+      await this.userService.createUser("10","10")
     }
   }
 
@@ -126,6 +136,42 @@ export class UserController{
         return{success:true,message:"余额不足，请先充值"}
       }
     }
+  }
+
+  @Get('/list')
+  async getUserList(
+    @Query('page') page: number = 1,
+    @Query('keyword') keyword?: string
+  ) {
+    return await this.userService.findUsers(page, 5, keyword);
+  }
+
+  @Patch('/admin')
+  async setAdminRole(@Body() body: { userId: number, isAdministrator: boolean },) {
+    // 验证当前操作者是否为超级管理员
+    const name = this.ctx.get('X-User-Name');
+    const  token = this.ctx.get('X-User-Token');
+    const currentUser = await this.userService.getUserByName(name);
+    if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
+      throw new Error('权限不足');
+    }
+    await this.userService.updateUser(body.userId, {
+      isAdministrator: body.isAdministrator
+    });
+    return { success: true };
+  }
+
+  @Del('/')
+  async deleteUser(@Query('id') id: number) {
+    // 验证当前操作者是否为超级管理员
+    const name = this.ctx.get('X-User-Name');
+    const  token = this.ctx.get('X-User-Token');
+    const currentUser = await this.userService.getUserByName(name);
+    if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
+      throw new Error('权限不足');
+    }
+    await this.userService.deleteUser(id);
+    return { success: true };
   }
 
   @Options('/role')

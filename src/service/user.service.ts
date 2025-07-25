@@ -42,13 +42,23 @@ export class UserService {
     });
   }
 
-  // 查询用户列表（带分页）
-  async findUsers(page: number, limit: number) {
-    const [users, total] = await this.userRepo.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data: users, total };
+
+  async findUsers(page: number, limit: number, keyword?: string) {
+    const query = this.userRepo.createQueryBuilder('user');
+    if (keyword) {
+      query.where(
+        'user.name LIKE :keyword OR user.id LIKE :keyword',
+        { keyword: `%${keyword}%` }
+      );
+    }
+    const [users, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+    return {
+      data: users,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 
   // 更新用户
