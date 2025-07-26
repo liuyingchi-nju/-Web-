@@ -48,11 +48,13 @@ export class UserController{
     return { success: true }; // 直接返回 200
   }
 
-  @Post('/token')
-  async login(@Body() body: { name: string, password: string }) {
-    const user=await this.userService.getUserByName(body.name);
+  @Get('/token')
+  async login() {
+    const name = this.ctx.get('X-User-Name');
+    const  password = this.ctx.get('X-User-Password');
+    const user=await this.userService.getUserByName(name);
     if (user!==undefined&&user!==null) {
-      if (user.password===body.password){
+      if (user.password===password){
           //传回用户信息
         const token=Math.random();
         await this.userService.updateUser(user.id, {token:token.toString()})
