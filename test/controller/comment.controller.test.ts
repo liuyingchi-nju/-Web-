@@ -17,13 +17,11 @@ describe('test/comment.controller.test.ts', () => {
   let blindBoxService:BlindBoxService;
 
 
-  // 测试用户数据
   const testUser = {
     name: 'comment_test_user_' + Math.random().toString(36).substr(2, 5),
     password: 'test_password_' + Math.random().toString(36).substr(2, 5)
   };
 
-  // 测试评论数据
   const testComment = {
     blindBoxId: 2,
     content: '这是一个测试评论' + Math.random().toString(36).substr(2, 5)
