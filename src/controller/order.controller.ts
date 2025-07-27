@@ -99,7 +99,10 @@ export class OrderController {
 
   @Get('/detail')
   async getDetail(@Query('id') id: number){
-    return await this.orderService.getOrderById(id);
+    if (await this.orderService.getOrderById(id)!==null&&await this.orderService.getOrderById(id)!==undefined){
+      return await this.orderService.getOrderById(id);
+    }
+    throw new Error("订单不存在")
   }
 
   @Options('/detail')
@@ -111,13 +114,16 @@ export class OrderController {
   async updateConditions(@Body() body: {  orderId: number,mode:string}){
     if (body.mode==='isSent'){
       await this.orderService.updateOrderStatus(body.orderId,{isSent:true});
+      return {success:true};
     }else if (body.mode==='isReceived'){
       const order=await this.orderService.getOrderById(body.orderId);
       if (order&&order.isSent){
         await this.orderService.updateOrderStatus(body.orderId,{isReceived:true,isDone:true});
+        return {success:true};
       }
-      return {success:true};
+      throw new Error("修改失败")
     }
+    throw new Error("暂不支持其他订单状态修改模式")
   }
 
   @Options('/condition')
