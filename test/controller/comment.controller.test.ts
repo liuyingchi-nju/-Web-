@@ -59,29 +59,26 @@ describe('test/comment.controller.test.ts', () => {
   });
 
   afterAll(async () => {
-    // 关闭应用实例
-    await close(app);
-
-    // 清理测试图片
     const tempDir = path.join(__dirname, 'temp');
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
     }
+    // 关闭应用实例
+    await close(app);
   });
 
   // 清理测试数据
   async function cleanupTestData() {
-    // 清理测试用户
     const user = await userService.getUserByName(testUser.name);
+    const comments = await commentService.getCommentsByUserId(user?.id || 0);
+
+    for (const comment of comments) {
+      await commentService.deleteCommentById(comment.id);
+    }
     if (user) {
       await userService.deleteUser(user.id);
     }
 
-    // 清理测试评论
-    const comments = await commentService.getCommentsByUserId(user?.id || 0);
-    for (const comment of comments) {
-      await commentService.deleteCommentById(comment.id);
-    }
   }
 
   describe('评论功能', () => {
