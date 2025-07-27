@@ -16,6 +16,7 @@ describe('test/comment.controller.test.ts', () => {
   let orderService: OrderService;
   let blindBoxService:BlindBoxService;
 
+
   // 测试用户数据
   const testUser = {
     name: 'comment_test_user_' + Math.random().toString(36).substr(2, 5),
@@ -56,6 +57,15 @@ describe('test/comment.controller.test.ts', () => {
   // 清理测试数据
   async function cleanupTestData() {
     await blindBoxService.removeGoodsFromBlindBox(testComment.blindBoxId,1);
+    const user=await userService.getUserByName(testUser.name);
+    const Orders=await orderService.getUserOrders(user);
+    const Comments=await commentService.getCommentsByUserId(user.id);
+    for (const order of Orders){
+      await orderService.deleteOrder(order.id);
+    }
+    for (const comment of Comments){
+      await commentService.deleteCommentById(comment.id);
+    }
     await userService.deleteUser((await userService.getUserByName(testUser.name)).id);
   }
 
