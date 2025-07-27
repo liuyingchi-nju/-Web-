@@ -29,8 +29,6 @@ describe('test/comment.controller.test.ts', () => {
   };
 
 
-  const pictureName=`test_${Math.random().toString(36).substr(2, 5)}.jpg`
-
 
   beforeAll(async () => {
     // 创建应用实例
@@ -48,12 +46,9 @@ describe('test/comment.controller.test.ts', () => {
 
   afterAll(async () => {
     const tempDir = path.join(__dirname, 'temp');
-    const saveDir=path.join('../../src/data/pictures',pictureName)
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
-      fs.rmSync(saveDir)
     }
-    await userService.deleteUser((await userService.getUserByName(testUser.name)).id);
     // 关闭应用实例
     await close(app);
   });
@@ -61,6 +56,7 @@ describe('test/comment.controller.test.ts', () => {
   // 清理测试数据
   async function cleanupTestData() {
     await blindBoxService.removeGoodsFromBlindBox(testComment.blindBoxId,1);
+    await userService.deleteUser((await userService.getUserByName(testUser.name)).id);
   }
 
   describe('评论功能', () => {
