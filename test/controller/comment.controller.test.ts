@@ -28,13 +28,16 @@ describe('test/comment.controller.test.ts', () => {
     content: '这是一个测试评论' + Math.random().toString(36).substr(2, 5)
   };
 
+
+  const pictureName=`test_${Math.random().toString(36).substr(2, 5)}.jpg`
+
   // 创建测试图片文件
   const createTestImage = () => {
     const tempDir = path.join(__dirname, 'temp');
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
     }
-    const filePath = path.join(tempDir, `test_${Math.random().toString(36).substr(2, 5)}.jpg`);
+    const filePath = path.join(tempDir, pictureName);
     fs.writeFileSync(filePath, 'test image content');
     return filePath;
   };
@@ -64,8 +67,10 @@ describe('test/comment.controller.test.ts', () => {
 
   afterAll(async () => {
     const tempDir = path.join(__dirname, 'temp');
+    const saveDir=path.join('../../src/data/pictures',pictureName)
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
+      fs.rmSync(saveDir)
     }
     await userService.deleteUser((await userService.getUserByName(testUser.name)).id);
     // 关闭应用实例
@@ -74,11 +79,7 @@ describe('test/comment.controller.test.ts', () => {
 
   // 清理测试数据
   async function cleanupTestData() {
-    const user = await userService.getUserByName(testUser.name);
-    const comments = await commentService.getCommentsByUserId(user?.id || 0);
-    for (const comment of comments) {
-      await commentService.deleteCommentById(comment.id);
-    }
+    await blindBoxService.deleteBlindBox(testComment.blindBoxId);
   }
 
   describe('评论功能', () => {
