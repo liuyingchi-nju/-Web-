@@ -50,12 +50,16 @@ describe('test/comment.controller.test.ts', () => {
     orderService = await app.getApplicationContext().getAsync(OrderService);
     blindBoxService=await app.getApplicationContext().getAsync(BlindBoxService);
     goodsService=await app.getApplicationContext().getAsync(GoodsService);
-    await blindBoxService.createBlindBox({name:'test_box',avatarPath:'none',num:1000,price:100})
-    await goodsService.createGoods({name:'test_good'});
-    if (await blindBoxService.isGoodsInBlindBox(1,1)){
-      await blindBoxService.removeGoodsFromBlindBox(1,1);
+    if (await blindBoxService.getBlindBoxById(1)===null||await blindBoxService.getBlindBoxById(1)===undefined){
+      testComment.blindBoxId=(await blindBoxService.createBlindBox({
+        name: 'test_box',
+        avatarPath: 'none',
+        num: 1000,
+        price: 100
+      })).id
     }
-    await blindBoxService.addGoodToBlindBox(1,1);
+    const goodsId= (await goodsService.createGoods({name: 'test_good'})).id;
+    await blindBoxService.addGoodToBlindBox(testComment.blindBoxId,goodsId);
   });
 
   afterAll(async () => {
@@ -63,6 +67,7 @@ describe('test/comment.controller.test.ts', () => {
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
     }
+    await userService.deleteUser((await userService.getUserByName(testUser.name)).id);
     // 关闭应用实例
     await close(app);
   });
@@ -71,14 +76,9 @@ describe('test/comment.controller.test.ts', () => {
   async function cleanupTestData() {
     const user = await userService.getUserByName(testUser.name);
     const comments = await commentService.getCommentsByUserId(user?.id || 0);
-
     for (const comment of comments) {
       await commentService.deleteCommentById(comment.id);
     }
-    if (user) {
-      await userService.deleteUser(user.id);
-    }
-
   }
 
   describe('评论功能', () => {
@@ -86,19 +86,13 @@ describe('test/comment.controller.test.ts', () => {
     let testImagePath: string;
 
     beforeAll(async () => {
-
       // 注册测试用户
-      await request.post('/user').send(testUser).expect(200);
-
-
-      // 获取用户ID
+      if (await userService.getUserByName(testUser.name)===null||await userService.getUserByName(testUser.name)===undefined){
+        await request.post('/user').send(testUser).expect(200);
+      }
       const user = await userService.getUserByName(testUser.name);
       userId = user.id;
-
-      // 创建测试图片
       testImagePath = createTestImage();
-
-      // 模拟用户购买了盲盒
       await orderService.createOrder(await userService.getUserById(userId),100,testComment.blindBoxId);
     });
 
