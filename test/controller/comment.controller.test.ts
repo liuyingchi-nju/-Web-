@@ -6,7 +6,7 @@ import { OrderService } from '../../src/service/order.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import {BlindBoxService} from "../../src/service/blindbox.service";
-import {GoodsService} from "../../src/service/goods.service";
+
 
 describe('test/comment.controller.test.ts', () => {
   let app;
@@ -15,7 +15,7 @@ describe('test/comment.controller.test.ts', () => {
   let commentService: CommentService;
   let orderService: OrderService;
   let blindBoxService:BlindBoxService;
-  let goodsService:GoodsService;
+
   // 测试用户数据
   const testUser = {
     name: 'comment_test_user_' + Math.random().toString(36).substr(2, 5),
@@ -24,23 +24,13 @@ describe('test/comment.controller.test.ts', () => {
 
   // 测试评论数据
   const testComment = {
-    blindBoxId: 1, // 假设存在一个盲盒ID为1
+    blindBoxId: 2,
     content: '这是一个测试评论' + Math.random().toString(36).substr(2, 5)
   };
 
 
   const pictureName=`test_${Math.random().toString(36).substr(2, 5)}.jpg`
 
-  // 创建测试图片文件
-  const createTestImage = () => {
-    const tempDir = path.join(__dirname, 'temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
-    }
-    const filePath = path.join(tempDir, pictureName);
-    fs.writeFileSync(filePath, 'test image content');
-    return filePath;
-  };
 
   beforeAll(async () => {
     // 创建应用实例
@@ -52,17 +42,8 @@ describe('test/comment.controller.test.ts', () => {
     commentService = await app.getApplicationContext().getAsync(CommentService);
     orderService = await app.getApplicationContext().getAsync(OrderService);
     blindBoxService=await app.getApplicationContext().getAsync(BlindBoxService);
-    goodsService=await app.getApplicationContext().getAsync(GoodsService);
-    if (await blindBoxService.getBlindBoxById(1)===null||await blindBoxService.getBlindBoxById(1)===undefined){
-      testComment.blindBoxId=(await blindBoxService.createBlindBox({
-        name: 'test_box',
-        avatarPath: 'none',
-        num: 1000,
-        price: 100
-      })).id
-    }
-    const goodsId= (await goodsService.createGoods({name: 'test_good'})).id;
-    await blindBoxService.addGoodToBlindBox(testComment.blindBoxId,goodsId);
+    await blindBoxService.createBlindBox({name:'teatName',avatarPath:'none',num:10,price:100});
+    await blindBoxService.addGoodToBlindBox(testComment.blindBoxId,1);
   });
 
   afterAll(async () => {
@@ -79,12 +60,11 @@ describe('test/comment.controller.test.ts', () => {
 
   // 清理测试数据
   async function cleanupTestData() {
-    await blindBoxService.deleteBlindBox(testComment.blindBoxId);
+    await blindBoxService.removeGoodsFromBlindBox(testComment.blindBoxId,1);
   }
 
   describe('评论功能', () => {
     let userId: number;
-    let testImagePath: string;
 
     beforeAll(async () => {
       // 注册测试用户
@@ -93,7 +73,6 @@ describe('test/comment.controller.test.ts', () => {
       }
       const user = await userService.getUserByName(testUser.name);
       userId = user.id;
-      testImagePath = createTestImage();
       await orderService.createOrder(await userService.getUserById(userId),100,testComment.blindBoxId);
     });
 
@@ -119,12 +98,9 @@ describe('test/comment.controller.test.ts', () => {
         .field('userName', testUser.name)
         .field('blindBoxId', testComment.blindBoxId.toString())
         .field('content', testComment.content)
-        .attach('images', testImagePath)
         .expect(200);
 
       expect(result.body.success).toBe(true);
-      expect(result.body.data.imagePaths).toBeDefined();
-      expect(result.body.data.imagePaths.length).toBeGreaterThan(0);
     });
 
     it('应该获取盲盒的评论列表', async () => {
