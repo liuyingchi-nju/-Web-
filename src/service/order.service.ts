@@ -20,11 +20,14 @@ export class OrderService {
    * @returns 新创建的订单
    */
   async createOrder(user: User, money: number, blindBoxId:number): Promise<Order> {
+    const blindBox=await this.blindBoxService.getBlindBoxById(blindBoxId,true);
+    if (blindBox.goods.length===0){
+      throw new Error("禁止购买未完成设置的盲盒")
+    }
     const order = new Order();
     order.user = user;
     order.money = money;
     order.blindBoxId=blindBoxId;
-    const blindBox=await this.blindBoxService.getBlindBoxById(blindBoxId,true);
     order.isDone = false;
     order.isReceived=false;
     order.isSent=false;

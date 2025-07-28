@@ -31,6 +31,11 @@ export class GoodsController{
       await this.goodsService.createGoods({name: "腾讯视频会员三折券"})
       await this.goodsService.createGoods({name: "QQ音乐一天绿钻体验卡"})
       await this.goodsService.createGoods({name: "QQ音乐绿钻月卡"})
+      await this.goodsService.createGoods({name: "原神1288原石兑换码"})
+      await this.goodsService.createGoods({name: "王者荣耀随机皮肤体验券*50"})
+      await this.goodsService.createGoods({name: "火影忍者手游神秘道具"})
+      await this.goodsService.createGoods({name: "星穹铁道神秘道具"})
+      await this.goodsService.createGoods({name: "QQ音乐绿钻月卡"})
     }
   }
 

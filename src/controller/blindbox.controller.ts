@@ -43,60 +43,66 @@ export class BlindBoxController{
     await this.goodsService.initDefaultGoods();
     if (await this.blindBoxModel.count()===0) {
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒1',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
-        num: 150,
-        price:100
+        name: '应用福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/1.png',
+        num: 1500,
+        price:20
       });
       await this.blindBoxService.addGoodToBlindBox(1,1);
       await this.blindBoxService.addGoodToBlindBox(1,2);
       await this.blindBoxService.addGoodToBlindBox(1,3);
       await this.blindBoxService.addGoodToBlindBox(1,4);
+      await this.blindBoxService.addGoodToBlindBox(1,6);
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒2',
+        name: '游戏道具盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/2.png',
+        num: 10,
+        price:88,
+      });
+      await this.blindBoxService.addGoodToBlindBox(2,5);
+      await this.blindBoxService.addGoodToBlindBox(2,10);
+      await this.blindBoxService.addGoodToBlindBox(2,11);
+      await this.blindBoxService.addGoodToBlindBox(2,12);
+      await this.blindBoxService.addGoodToBlindBox(2,13);
+      await this.blindBoxService.createBlindBox({
+        name: '福利盲盒',
         avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
+        num: 3,
+        price:100
+      });
+      await this.blindBoxService.createBlindBox({
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/3.png',
         num: 3,
         price:100,
       });
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒3',
-        avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/4.png',
         num: 3,
         price:100
       });
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒4',
-        avatarPath: 'http://127.0.0.1:7001/pictures/1.jpg',
-        num: 3,
-        price:100,
-      });
-      await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒5',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/5.png',
         num: 3,
         price:100
       });
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒6',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/6.png',
         num: 3,
         price:100
       });
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒7',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/7.png',
         num: 3,
         price:100
       });
       await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒8',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
-        num: 3,
-        price:100
-      });
-      await this.blindBoxService.createBlindBox({
-        name: '应用福利盲盒9',
-        avatarPath: 'http://127.0.0.1:7001/pictures/nopicture.jpg',
+        name: '福利盲盒',
+        avatarPath: 'http://127.0.0.1:7001/pictures/8.png',
         num: 3,
         price:100
       });

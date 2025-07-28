@@ -157,6 +157,10 @@ export class UserController{
     if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
       throw new Error('权限不足');
     }
+    const user=await this.userService.getUserById(body.userId);
+    if (user.name=="root"&&user.id==1){
+      return {success:false,message:"超级管理员权限不可移除！"}
+    }
     await this.userService.updateUser(body.userId, {
       isAdministrator: body.isAdministrator
     });

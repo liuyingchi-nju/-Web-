@@ -13,14 +13,21 @@ export class GoodsService {
     if (await this.goodsModel.count() === 0) {
       await this.batchCreateGoods([
         {name: "芒果TV月卡",avatarPath:"http://127.0.0.1:7001/pictures/mangotv.jpg"},
-        {name: "QQ音乐三天绿钻体验卡"},
-        {name: "bilibili大会员月卡"},
-        {name: "百度网盘不限速体验卡50张"},
-        {name: "三国杀移动版66宝珠兑换码"},
-        {name: "京东200元礼品卡"},
-        {name: "腾讯视频会员三折券"},
-        {name: "QQ音乐一天绿钻体验卡"},
-        {name: "QQ音乐绿钻月卡"}
+        {name: "QQ音乐三天绿钻体验卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "bilibili大会员月卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "百度网盘不限速体验卡*50",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "三国杀移动版66宝珠兑换码",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "京东200元礼品卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "腾讯视频会员三折券",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "QQ音乐一天绿钻体验卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "QQ音乐绿钻月卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "原神1288原石兑换码",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "王者荣耀随机皮肤体验券*50",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "火影忍者手游神秘道具",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "星穹铁道神秘道具",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "QQ音乐绿钻月卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "腾讯视频月卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
+        {name: "优酷视频月卡",avatarPath:"http://127.0.0.1:7001/pictures/"},
       ]);
       console.log('默认商品数据初始化完成');
     }
