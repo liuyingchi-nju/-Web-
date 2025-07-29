@@ -26,7 +26,7 @@ export class OrderService {
     }
     const order = new Order();
     order.user = user;
-    order.money = money;
+    order.money =Number(money.toFixed(2));
     order.blindBoxId=blindBoxId;
     order.isDone = false;
     order.isReceived=false;

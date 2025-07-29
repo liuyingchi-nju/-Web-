@@ -21,7 +21,7 @@ export class Order {
   @Column()
   isSent: boolean;//订单状态
 
-  @Column()
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   money: number//订单金额
 
   @Column()
@@ -29,4 +29,10 @@ export class Order {
 
   @ManyToOne(()=>Goods,undefined,{nullable:true})
   goods: Goods
+
+  @Column({nullable:true})
+  contact: number
+
+  @Column({nullable:true})
+  address:string
 }

@@ -131,5 +131,23 @@ export class OrderController {
     return {success:true};
   }
 
+  @Patch('/address&contact')
+  async updateAddressAndContact(@Body() body: { orderId: number,address:string,contact:number}){
+    const order=this.orderService.getOrderById(body.orderId);
+    if (!order){
+      throw new Error("订单不存在");
+    }
+    if (!body.orderId||!body.address){
+      return {success:false,message:"填写信息不完整"};
+    }
+    await this.orderService.updateOrderStatus(body.orderId,{address:body.address,contact:body.contact});
+    return {success:true,message:"修改成功"};
+  }
+
+  @Options('/address&contact')
+  async theAddressContactOption(){
+    return {success:true};
+  }
+
 
 }
