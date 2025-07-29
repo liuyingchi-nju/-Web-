@@ -43,6 +43,8 @@ export class UserController{
       if (checking===undefined||checking===null) {
         await this.userService.createUser(body.name, body.password);
         return {success: true,message:"注册成功"}
+      }else {
+        throw new Error("用户名已存在")
       }
     } catch (error) {
       this.ctx.status = 400;

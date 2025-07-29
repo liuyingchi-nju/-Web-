@@ -61,8 +61,8 @@ describe('test/user.controller.test.ts', () => {
       await request.post('/user').send(testUser).expect(200);
 
       // 再次注册相同用户
-      const result = await request.post('/user').send(testUser).expect(500);
-      expect(result.text).toContain("Error");
+      const result = await request.post('/user').send(testUser).expect(400);
+      expect(result.text).toContain("用户名已存在");
     });
   });
 
