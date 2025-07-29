@@ -4,12 +4,10 @@ import { BlindBoxService } from '../../src/service/blindbox.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
-
 describe('test/blindbox.controller.test.ts', () => {
   let app;
   let request;
   let blindBoxService: BlindBoxService;
-
 
   // Test data
   const testBlindBox = {
@@ -39,60 +37,46 @@ describe('test/blindbox.controller.test.ts', () => {
   describe('BlindBox Controller', () => {
     let createdBlindBoxId: number;
 
-    // Test GET /blindbox/information
-    describe('GET /blindbox/information', () => {
-      it('should get blindbox information with pagination', async () => {
+    // Test GET /blindboxs/list/:page
+    describe('GET /blindboxes/list/:page', () => {
+      it('should get blindbox list with pagination', async () => {
         const result = await request
-          .get('/blindbox/information')
-          .query({ page: 1 })
+          .get('/blindboxes/list/1')
           .expect(200);
 
         expect(result.body.data).toBeInstanceOf(Array);
         expect(result.body.totalPages).toBeDefined();
         expect(result.body.data.length).toBeGreaterThan(0);
       });
-
     });
 
-    // Test GET /blindbox/details
-    describe('GET /blindbox/details', () => {
+    // Test GET /blindboxs/:id
+    describe('GET /blindboxes/:id', () => {
       it('should get blindbox details by id', async () => {
         // First create a test blindbox
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         createdBlindBoxId = blindBox.id;
 
         const result = await request
-          .get('/blindbox/details')
-          .query({ id: createdBlindBoxId })
+          .get(`/blindboxes/${createdBlindBoxId}`)
           .expect(200);
 
         expect(result.body.id).toBe(createdBlindBoxId);
         expect(result.body.name).toBe(testBlindBox.name);
       });
 
-      it('should return error for missing id parameter', async () => {
-        const result = await request
-          .get('/blindbox/details')
-          .expect(200);
-
-        expect(result.body.success).toBe(false);
-        expect(result.body.message).toContain('缺少id参数');
-      });
-
       it('should return error for non-existent blindbox', async () => {
         await request
-          .get('/blindbox/details')
-          .query({ id: 999999 })
+          .get('/blindboxes/999999')
           .expect(500);
       });
     });
 
-    // Test GET /blindbox/specialinformation
-    describe('GET /blindbox/specialinformation', () => {
+    // Test GET /blindboxs/list/:keyword/:page
+    describe('GET /blindboxes/list/:keyword/:page', () => {
       it('should search blindboxes by keyword', async () => {
         const result = await request
-          .get('/blindbox/specialinformation')
-          .query({ keyword: 'none', page: 1 })
+          .get('/blindboxes/list/none/1')
           .expect(200);
 
         expect(result.body.data).toBeInstanceOf(Array);
@@ -100,20 +84,17 @@ describe('test/blindbox.controller.test.ts', () => {
       });
 
       it('should handle empty keyword', async () => {
-        const result = await request
-          .get('/blindbox/specialinformation')
-          .query({ page: 1 })
-          .expect(200);
-
-        expect(result.body.data).toBeInstanceOf(Array);
+        await request
+          .get('/blindboxes/list//1')
+          .expect(404);
       });
     });
 
-    // Test POST /blindbox/
-    describe('POST /blindbox/', () => {
+    // Test POST /blindboxs/
+    describe('POST /blindboxes/', () => {
       it('should create a new blindbox', async () => {
         const result = await request
-          .post('/blindbox')
+          .post('/blindboxes')
           .field('name', testBlindBox.name)
           .field('price', testBlindBox.price.toString())
           .field('num', testBlindBox.num.toString())
@@ -125,7 +106,7 @@ describe('test/blindbox.controller.test.ts', () => {
       it('should create a blindbox with image', async () => {
         // This would need a real file upload test in a real scenario
         const result = await request
-          .post('/blindbox')
+          .post('/blindboxes')
           .field('name', testBlindBox.name + '_with_image')
           .field('price', testBlindBox.price.toString())
           .field('num', testBlindBox.num.toString())
@@ -136,23 +117,22 @@ describe('test/blindbox.controller.test.ts', () => {
 
       it('should handle missing required fields', async () => {
         await request
-          .post('/blindbox')
+          .post('/blindboxes')
           .field('name', testBlindBox.name)
           // Missing price and num
           .expect(500);
       });
     });
 
-    // Test DELETE /blindbox/
-    describe('DELETE /blindbox/', () => {
+    // Test DELETE /blindboxs/:id
+    describe('DELETE /blindboxes/:id', () => {
       it('should delete a blindbox', async () => {
         // First create a test blindbox to delete
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         const blindBoxId = blindBox.id;
 
         const result = await request
-          .del('/blindbox')
-          .query({ id: blindBoxId })
+          .del(`/blindboxes/${blindBoxId}`)
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -160,21 +140,20 @@ describe('test/blindbox.controller.test.ts', () => {
 
       it('should handle deleting non-existent blindbox', async () => {
         await request
-          .del('/blindbox')
-          .query({ id: 999999 })
+          .del('/blindboxes/999999')
           .expect(500);
       });
     });
 
-    // Test PUT /blindbox/price
-    describe('PUT /blindbox/price', () => {
+    // Test PATCH /blindboxs/:id/price
+    describe('PATCH /blindboxes/:id/price', () => {
       it('should update blindbox price', async () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         const newPrice = 200;
 
         const result = await request
-          .put('/blindbox/price')
-          .send({ id: blindBox.id, price: newPrice })
+          .patch(`/blindboxes/${blindBox.id}/price`)
+          .send({ price: newPrice })
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -188,21 +167,21 @@ describe('test/blindbox.controller.test.ts', () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
 
         await request
-          .put('/blindbox/price')
-          .send({ id: blindBox.id, price: 'invalid' })
-          .expect(200);
+          .patch(`/blindboxes/${blindBox.id}/price`)
+          .send({ price: -1 })
+          .expect(500);
       });
     });
 
-    // Test PUT /blindbox/num
-    describe('PUT /blindbox/num', () => {
+    // Test PATCH /blindboxs/:id/num
+    describe('PATCH /blindboxes/:id/num', () => {
       it('should update blindbox quantity', async () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         const newNum = 20;
 
         const result = await request
-          .put('/blindbox/num')
-          .send({ id: blindBox.id, num: newNum })
+          .patch(`/blindboxes/${blindBox.id}/num`)
+          .send({ num: newNum })
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -213,15 +192,15 @@ describe('test/blindbox.controller.test.ts', () => {
       });
     });
 
-    // Test PUT /blindbox/name
-    describe('PUT /blindbox/name', () => {
+    // Test PATCH /blindboxs/:id/name
+    describe('PATCH /blindboxes/:id/name', () => {
       it('should update blindbox name', async () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         const newName = 'Updated ' + testBlindBox.name;
 
         const result = await request
-          .put('/blindbox/name')
-          .send({ id: blindBox.id, name: newName })
+          .patch(`/blindboxes/${blindBox.id}/name`)
+          .send({ name: newName })
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -232,16 +211,15 @@ describe('test/blindbox.controller.test.ts', () => {
       });
     });
 
-    // Test GET /blindbox/goods
-    describe('GET /blindbox/goods', () => {
+    // Test GET /blindboxs/:id/goods
+    describe('GET /blindboxes/:id/goods', () => {
       it('should get goods in a blindbox', async () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         // Add some goods to the blindbox
         await blindBoxService.addGoodToBlindBox(blindBox.id, 1);
 
         const result = await request
-          .get('/blindbox/goods')
-          .query({ id: blindBox.id })
+          .get(`/blindboxes/${blindBox.id}/goods`)
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -249,16 +227,15 @@ describe('test/blindbox.controller.test.ts', () => {
       });
     });
 
-    // Test PATCH /blindbox/goods
-    describe('PATCH /blindbox/goods', () => {
+    // Test PATCH /blindboxs/:id/goods
+    describe('PATCH /blindboxes/:id/goods', () => {
       it('should add goods to blindbox', async () => {
         const blindBox = await blindBoxService.createBlindBox(testBlindBox);
         const goodsId = 1; // Assuming this goods exists from initialization
 
         const result = await request
-          .patch('/blindbox/goods')
+          .patch(`/blindboxes/${blindBox.id}/goods`)
           .send({
-            blindBoxId: blindBox.id,
             goodsId: goodsId,
             isExist: false
           })
@@ -278,9 +255,8 @@ describe('test/blindbox.controller.test.ts', () => {
         await blindBoxService.addGoodToBlindBox(blindBox.id, goodsId);
 
         const result = await request
-          .patch('/blindbox/goods')
+          .patch(`/blindboxes/${blindBox.id}/goods`)
           .send({
-            blindBoxId: blindBox.id,
             goodsId: goodsId,
             isExist: true
           })
@@ -298,9 +274,8 @@ describe('test/blindbox.controller.test.ts', () => {
         const goodsId = 1;
 
         await request
-          .patch('/blindbox/goods')
+          .patch(`/blindboxes/${blindBox.id}/goods`)
           .send({
-            blindBoxId: blindBox.id,
             goodsId: goodsId,
             isExist: true // Trying to remove when not present
           })
@@ -310,65 +285,65 @@ describe('test/blindbox.controller.test.ts', () => {
 
     // Test OPTIONS routes
     describe('OPTIONS routes', () => {
-      it('should handle OPTIONS /blindbox/information', async () => {
+      it('should handle OPTIONS /blindboxes/list/:page', async () => {
         const result = await request
-          .options('/blindbox/information')
+          .options('/blindboxes/list/1')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/details', async () => {
+      it('should handle OPTIONS /blindboxes/:id', async () => {
         const result = await request
-          .options('/blindbox/details')
+          .options('/blindboxes/1')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/specialinformation', async () => {
+      it('should handle OPTIONS /blindboxs/list/:keyword/:page', async () => {
         const result = await request
-          .options('/blindbox/specialinformation')
+          .options('/blindboxes/list/test/1')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/', async () => {
+      it('should handle OPTIONS /blindboxes/', async () => {
         const result = await request
-          .options('/blindbox')
+          .options('/blindboxes')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/price', async () => {
+      it('should handle OPTIONS /blindboxes/:id/price', async () => {
         const result = await request
-          .options('/blindbox/price')
+          .options('/blindboxes/1/price')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/num', async () => {
+      it('should handle OPTIONS /blindboxes/:id/num', async () => {
         const result = await request
-          .options('/blindbox/num')
+          .options('/blindboxes/1/num')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/name', async () => {
+      it('should handle OPTIONS /blindboxes/:id/name', async () => {
         const result = await request
-          .options('/blindbox/name')
+          .options('/blindboxes/1/name')
           .expect(200);
 
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /blindbox/goods', async () => {
+      it('should handle OPTIONS /blindboxes/:id/goods', async () => {
         const result = await request
-          .options('/blindbox/goods')
+          .options('/blindboxes/1/goods')
           .expect(200);
 
         expect(result.body.success).toBe(true);

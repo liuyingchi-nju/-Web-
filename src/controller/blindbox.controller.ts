@@ -4,14 +4,12 @@ import {
   Init,
   Get,
   Options,
-  Query,
   Body,
-  Put,
   Patch,
   Post,
   Files,
   Fields,
-  Del
+  Del, Param
 } from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import {BlindBoxService} from "../service/blindbox.service";
@@ -21,7 +19,7 @@ import {Repository} from "typeorm";
 import { BlindBox } from '../entity/blindbox.entity';
 import {PicturesService} from "../service/pictures.service";
 
-@Controller("/blindbox")
+@Controller("/blindboxes")
 export class BlindBoxController{
   @Inject()
   ctx: Context;
@@ -109,18 +107,18 @@ export class BlindBoxController{
     }
   }
 
-  @Get("/information")
-  async getInformation(@Query('page') page:number){
+  @Get("/list/:page")
+  async getList(@Param('page') page:number){
     return await this.blindBoxService.getBlindBoxesByPage(Number(page), 7, false)
   }
 
-  @Options('/information')
+  @Options('/list/:page')
   async MainInformation(){
     return {success:true};
   }
 
-  @Get('/details')
-  async getDetails(@Query('id') id: number) {
+  @Get('/:id')
+  async getBlindBox(@Param('id') id: number) {
     if (!id) {
       return { success: false, message: '缺少id参数' };
     }
@@ -132,22 +130,20 @@ export class BlindBoxController{
     }
   }
 
-
-
-  @Options("/details")
+  @Options("/:id")
   async gAllInformation(){
     return {success:true};
   }
 
-  @Get("/specialinformation")
+  @Get("/list/:keyword/:page")
   async searchBlindBoxes(
-    @Query('keyword') keyword: string,
-    @Query('page') page: number,
+    @Param('keyword') keyword: string,
+    @Param('page') page: number,
   ) {
     return await this.blindBoxService.searchBlindBoxes(keyword, Number(page));
   }
 
-  @Options('/specialinformation')
+  @Options('/list/:keyword/:page')
   async searchOptions() {
     return { success: true };
   }
@@ -179,8 +175,8 @@ export class BlindBoxController{
     return { success: true };
   }
 
-  @Del('/')
-  async deleteBlindBox(@Query('id') id:number){
+  @Del('/:id')
+  async deleteBlindBox(@Param('id') id:number){
     const blindBox=await this.blindBoxService.getBlindBoxById(id);
     if (blindBox===null||blindBox===undefined){
       throw new Error("找不到该id的盲盒")
@@ -189,77 +185,89 @@ export class BlindBoxController{
     return {success: true};
   }
 
-  @Put('/price')
-  async editPrice(@Body() body: {id: number ,price:number}){
-    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+  @Options('/"id')
+  async delOptions() {
+    return { success: true };
+  }
+
+  @Patch('/:id/price')
+  async editPrice(@Body() body: {price:number},
+                  @Param('id') id:number){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id);
     if (blindBox===null||blindBox===undefined){
       throw new Error("找不到该id的盲盒")
     }
-    await this.blindBoxService.updateBlindBox(body.id,{price:body.price})
+    if(body.price<0){
+      throw new Error("价格参数不合法")
+    }
+    await this.blindBoxService.updateBlindBox(id,{price:body.price})
     return {success:true};
   }
 
-  @Options('/price')
+  @Options('/:id/price')
   async priceOptions() {
     return { success: true };
   }
 
 
-  @Put('/num')
-  async editNum(@Body() body: {id: number ,num:number}){
-    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+  @Patch('/:id/num')
+  async editNum(@Body() body: {num:number},
+                @Param('id') id:number){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id);
     if (blindBox===null||blindBox===undefined){
       throw new Error("找不到该id的盲盒")
     }
-    await this.blindBoxService.updateBlindBox(body.id,{num:body.num})
+    await this.blindBoxService.updateBlindBox(id,{num:body.num})
     return {success:true};
   }
 
-  @Options('/num')
+  @Options('/:id/num')
   async numOptions() {
     return { success: true };
   }
 
-  @Put('/name')
-  async editName(@Body() body: {id: number ,name:string}){
-    const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+  @Patch('/:id/name')
+  async editName(@Body() body: {name:string},
+                 @Param('id') id:number){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id);
     if (blindBox===null||blindBox===undefined){
       throw new Error("找不到该id的盲盒")
     }
-    await this.blindBoxService.updateBlindBox(body.id,{name:body.name})
+    await this.blindBoxService.updateBlindBox(id,{name:body.name})
     return {success:true};
   }
 
-  @Options('/name')
+  @Options('/:id/name')
   async nameOptions() {
     return { success: true };
   }
 
-  @Get('/goods')
-  async getGoods(@Query('id') id:number){
+  @Get('/:id/goods')
+  async getGoods(@Param('id') id:number){
     const blindBox=await this.blindBoxService.getBlindBoxById(id,true);
     return {success:true,data:blindBox.goods}
   }
 
-  @Options('/goods')
+  @Options('/:id/goods')
   async goodsOptions() {
     return { success: true };
   }
 
-  @Patch('/goods')
-  async removeGoods(@Body() body:{blindBoxId:number,goodsId:number,isExist:boolean}){
-    const blindBox=await this.blindBoxService.getBlindBoxById(body.blindBoxId);
+  @Patch('/:id/goods')
+  async removeGoods(@Body() body:{goodsId:number,isExist:boolean},
+                    @Param('id') id:number,){
+    const blindBox=await this.blindBoxService.getBlindBoxById(id);
     if (blindBox===null||blindBox===undefined){
       throw new Error("盲盒不存在");
     }
-    const result=await this.blindBoxService.isGoodsInBlindBox(body.blindBoxId,body.goodsId);
+    const result=await this.blindBoxService.isGoodsInBlindBox(id,body.goodsId);
     if (body.isExist!==result){
       throw new Error("非法参数")
     }else {
       if (body.isExist){
-        await this.blindBoxService.removeGoodsFromBlindBox(body.blindBoxId,body.goodsId);
+        await this.blindBoxService.removeGoodsFromBlindBox(id,body.goodsId);
       }else {
-        await this.blindBoxService.addGoodToBlindBox(body.blindBoxId,body.goodsId);
+        await this.blindBoxService.addGoodToBlindBox(id,body.goodsId);
       }
       return {success:true};
     }
