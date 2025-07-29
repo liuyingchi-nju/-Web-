@@ -37,8 +37,12 @@ describe('test/comment.controller.test.ts', () => {
     blindBoxService = await app.getApplicationContext().getAsync(BlindBoxService);
     goodsService=await app.getApplicationContext().getAsync(GoodsService);
     await blindBoxService.createBlindBox({name: 'testName', avatarPath: 'none', num: 10, price: 100});
-    await goodsService.createGoods({name:'testGood',avatarPath:"none"});
-    await blindBoxService.addGoodToBlindBox(testComment.blindBoxId, 1);
+    if (!await goodsService.getGoodsById(1)){
+      await goodsService.createGoods({name:'testGood',avatarPath:"none"});
+    }
+    if(!await blindBoxService.isGoodsInBlindBox(testComment.blindBoxId,1)){
+      await blindBoxService.addGoodToBlindBox(testComment.blindBoxId, 1);
+    }
   });
 
   afterAll(async () => {
