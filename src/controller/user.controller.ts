@@ -2,6 +2,7 @@ import {Body, Controller, Del, Get, Init, Inject, Options, Patch, Post, Query} f
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
 import {OrderService} from "../service/order.service";
+import {Mutex} from "../util/mutex";
 
 @Controller('/user')
 export class UserController{
@@ -14,6 +15,8 @@ export class UserController{
 
   @Inject()
   userService: UserService;
+
+  private mutex = new Mutex();
 
   @Init()
   async initData() {
@@ -34,17 +37,27 @@ export class UserController{
 
   @Post('/')
   async register(@Body() body: { name: string, password: string }) {
-    const checking=await this.userService.getUserByName(body.name);
-    if (checking===undefined||checking===null) {
-      await this.userService.createUser(body.name, body.password);
-      return {success: true,message:"注册成功"}
+    await this.mutex.lock();
+    try {
+      const checking=await this.userService.getUserByName(body.name);
+      if (checking===undefined||checking===null) {
+        await this.userService.createUser(body.name, body.password);
+        return {success: true,message:"注册成功"}
+      }
+    } catch (error) {
+      this.ctx.status = 400;
+      return {
+        success: false,
+        message: error.message
+      };
+    } finally {
+      this.mutex.unlock();
     }
-    throw new Error('用户名已存在');
   }
 
 
-  @Options('/register')
-  async handleOptionsRegister() {
+  @Options('/')
+  async handleOptions() {
     return { success: true }; // 直接返回 200
   }
 
@@ -113,10 +126,6 @@ export class UserController{
     return await this.userService.getUserByName(name);
   }
 
-  @Options('/')
-  async ser (){
-    return {success:true}
-  }
 
   @Options('/balance')
   async balance(){

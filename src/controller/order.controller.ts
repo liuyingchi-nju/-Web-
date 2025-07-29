@@ -30,7 +30,6 @@ export class OrderController {
         this.userService.getUserByName(name),
         this.blindBoxService.getBlindBoxById(id, true)
       ]);
-
       if (!user) throw new Error('用户不存在');
       if (!blindBox) throw new Error('盲盒不存在');
       if (blindBox.num <= 0) throw new Error('该盲盒已售罄');

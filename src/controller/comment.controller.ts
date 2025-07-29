@@ -1,11 +1,11 @@
-import { Controller, Fields, Files, Get, Inject, Options, Post, Query} from '@midwayjs/core';
+import {Controller, Fields, Files, Get, Inject, Options, Param, Post} from '@midwayjs/core';
 import {Context} from "@midwayjs/koa";
 import {PicturesService} from "../service/pictures.service";
 import {UserService} from "../service/user.service";
 import {CommentService} from "../service/comment.service";
 import {OrderService} from "../service/order.service";
 
-@Controller('/comment')
+@Controller('/comments')
 export class CommentController {
 
   @Inject()
@@ -30,17 +30,19 @@ export class CommentController {
   @Post('/')
   async createComment(
     @Files() files: Array<{ filename: string; data: Buffer; fieldName: string }>,
-    @Fields() fields: { content?: string; userName: string; blindBoxId: string }
+    @Fields() fields: { content?: string; name:string,blindBoxId: string },
   ) {
-    // 1. 处理图片上传
+    const user=await this.userService.getUserByName(fields.name)
+    if (!user){
+      this.ctx.status=400;
+    }
     let imagePaths: string[] = [];
     if (files && files.length > 0) {
       const images = files.filter(f => f.fieldName === 'images');
       imagePaths = await this.picturesService.savePictures(images);
     }
-    // 2. 创建评论
     const comment = await this.commentService.createComment({
-      userId: (await this.userService.getUserByName(fields.userName)).id,// 假设 userName 是用户ID
+      userId: (await this.userService.getUserByName(fields.name)).id,// 假设 userName 是用户ID
       blindboxId: parseInt(fields.blindBoxId),
       content: fields.content,
       imagePaths,
@@ -49,25 +51,28 @@ export class CommentController {
     return { success: true, data: comment };
   }
 
-  @Get('/')
-  async getComments(@Query('blindboxId') blindboxId: number) {
-    return await this.commentService.getCommentsByBlindBoxId(blindboxId);
+  @Get('/:blindBoxId')
+  async getComments(@Param('blindBoxId') blindBoxId:number ) {
+    return await this.commentService.getCommentsByBlindBoxId(blindBoxId);
   }
 
-  @Get('/permission')
-  async getPermission(@Query('blindboxId') blindboxId: number,
-                      @Query('name') name: string){
+  @Get('/:name/:blindBoxId/comment-permission')
+  async getPermission(@Param('blindBoxId') blindBoxId: number,
+                      @Param('name') name: string){
     const user=await this.userService.getUserByName(name);
+    if (!user){
+      this.ctx.status=400;
+    }
     const orderList=await this.orderService.getUserOrders(user);
     for (let i=0;i<orderList.length;i++){
-      if (orderList[i].blindBoxId===blindboxId){
+      if (orderList[i].blindBoxId===blindBoxId){
         return {success:true}
       }
     }
     return {success:false}
   }
 
-  @Options('/permission')
+  @Options('/:name/:blindBoxId/comment-permission')
   async Permission(){
     return {success :true}
   }
