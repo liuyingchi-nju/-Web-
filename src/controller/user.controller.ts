@@ -185,12 +185,12 @@ export class UserController{
     const name = this.ctx.get('X-User-Name');
     const  token = this.ctx.get('X-User-Token');
     const currentUser = await this.userService.getUserByName(name);
-    if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
+    if (!currentUser?.isSuperAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
       throw new Error('权限不足');
     }
     const user=await this.userService.getUserById(id);
     if (user.isSuperAdministrator){
-      return {success:false,message:"超级管理员权限不可移除！"}
+      return {success:false,message:"超级管理员管理权限不可移除！"}
     }
     await this.userService.updateUser(id, {
       isAdministrator: body.isAdministrator
@@ -204,7 +204,7 @@ export class UserController{
     return{success:true}
   }
 
-  @Get('/:name/order')
+  @Get('/:name/orders')
   async getOrders(@Param('name') name:string){
     if (!name){
       return {success: false,message:'登录状态异常'};
@@ -216,7 +216,7 @@ export class UserController{
     return await this.orderService.getUserOrders(user)
   }
 
-  @Options('/:name/order')
+  @Options('/:name/orders')
   async orderOption(){
     return {success:true};
   }
