@@ -41,7 +41,9 @@ describe('test/order.controller.test.ts', () => {
     // 创建测试盲盒
     await goodsService.createGoods({name:"testGoods",avatarPath:"none"});
     await blindBoxService.createBlindBox(testBlindBox);
-    await blindBoxService.addGoodToBlindBox(1, 1); // 添加默认商品
+    if (!await blindBoxService.isGoodsInBlindBox(1,1)){
+      await blindBoxService.addGoodToBlindBox(1, 1); // 添加默认商品
+    }
   });
 
   afterAll(async () => {

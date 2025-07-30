@@ -148,7 +148,7 @@ export class OrderController {
      this.ctx.status=400;
      return ;
     }
-    if (!id||!body.address){
+    if (!body.contact||!body.address){
       this.ctx.status=400;
       return ;
     }
