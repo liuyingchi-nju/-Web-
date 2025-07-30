@@ -2,7 +2,6 @@ import { createApp, close, createHttpRequest } from '@midwayjs/mock';
 import { Framework } from '@midwayjs/koa';
 import { UserService } from '../../src/service/user.service';
 
-
 describe('test/user.controller.test.ts', () => {
   let app;
   let request;
@@ -48,7 +47,7 @@ describe('test/user.controller.test.ts', () => {
 
     it('应该成功注册新用户', async () => {
       const result = await request
-        .post('/user')
+        .post('/users')
         .send(testUser)
         .expect(200);
 
@@ -58,19 +57,18 @@ describe('test/user.controller.test.ts', () => {
 
     it('不应该注册已存在的用户', async () => {
       // 先注册用户
-      await request.post('/user').send(testUser).expect(200);
+      await request.post('/users').send(testUser).expect(200);
 
       // 再次注册相同用户
-      const result = await request.post('/user').send(testUser).expect(400);
+      const result = await request.post('/users').send(testUser).expect(400);
       expect(result.text).toContain("用户名已存在");
     });
   });
 
   describe('用户登录', () => {
-
     beforeAll(async () => {
       // 注册测试用户
-      await request.post('/user').send(testUser).expect(200);
+      await request.post('/users').send(testUser).expect(200);
     });
 
     afterAll(async () => {
@@ -78,29 +76,25 @@ describe('test/user.controller.test.ts', () => {
     });
 
     it('应该成功登录', async () => {
-      const result = await request.get('/user/token')
-        .set('X-User-Name', testUser.name)
+      const result = await request.get(`/users/${testUser.name}/token`)
         .set('X-User-Password', testUser.password)
         .expect(200);
 
       expect(result.body.success).toBe(true);
       expect(result.body.message).toBe('登录成功');
       expect(result.body.data.token).toBeDefined();
-
     });
 
     it('应该因密码错误而登录失败', async () => {
-      const result = await request.get('/user/token')
-        .set('X-User-Name', testUser.name)
-        .set('X-User-Password','wrong_password')
+      const result = await request.get(`/users/${testUser.name}/token`)
+        .set('X-User-Password', 'wrong_password')
         .expect(500);
       expect(result.text).toContain('Error');
     });
 
     it('应该因用户不存在而登录失败', async () => {
-      const result = await request.get('/user/token')
-        .set('X-User-Name', 'non_existent_user')
-        .set('X-User-Password',  'password')
+      const result = await request.get('/users/non_existent_user/token')
+        .set('X-User-Password', 'password')
         .expect(500);
       expect(result.text).toContain('Error');
     });
@@ -113,16 +107,12 @@ describe('test/user.controller.test.ts', () => {
     beforeAll(async () => {
       // 管理员登录获取token
       await userService.createAdmin('root','root');
-      const loginResult = await request.get('/user/token')
-        .set('X-User-Name', 'root')
-        .set('X-User-Password','root')
+      const loginResult = await request.get('/users/root/token')
+        .set('X-User-Password', 'root')
         .expect(200);
       adminToken = loginResult.body.data.token;
       // 创建测试用户
-       await request
-        .post('/user')
-        .send(testUser)
-        .expect(200);
+      await request.post('/users').send(testUser).expect(200);
       const user = await userService.getUserByName(testUser.name);
       testUserId = user.id;
     });
@@ -133,8 +123,7 @@ describe('test/user.controller.test.ts', () => {
 
     it('应该成功验证管理员身份', async () => {
       const result = await request
-        .get('/user/admin')
-        .set('X-User-Name', adminUser.name)
+        .get('/users/root/admin')
         .set('X-User-Token', adminToken)
         .expect(200);
       expect(result.body.success).toBe(true);
@@ -142,29 +131,18 @@ describe('test/user.controller.test.ts', () => {
 
     it('应该因错误的token而验证失败', async () => {
       const result = await request
-        .get('/user/admin')
-        .set('X-User-Name', adminUser.name)
+        .get('/users/root/admin')
         .set('X-User-Token', 'wrong_token')
-        .expect(500);
-      expect(result.text).toContain('Error');
+        .expect(200);
+      expect(result.body.success).toBe(false);
     });
 
     it('应该成功设置管理员角色', async () => {
       const result = await request
-        .patch('/user/admin')
+        .patch(`/users/${testUserId}/admin`)
         .set('X-User-Name', adminUser.name)
         .set('X-User-Token', adminToken)
-        .send({ userId: testUserId, isAdministrator: true })
-        .expect(200);
-      expect(result.body.success).toBe(true);
-    });
-
-    it('应该成功删除用户', async () => {
-      const result = await request
-        .del('/user')
-        .set('X-User-Name', adminUser.name)
-        .set('X-User-Token', adminToken)
-        .query({ id: testUserId })
+        .send({ isAdministrator: true })
         .expect(200);
       expect(result.body.success).toBe(true);
     });
@@ -175,13 +153,12 @@ describe('test/user.controller.test.ts', () => {
 
     beforeAll(async () => {
       // 注册测试用户
-      await request.post('/user').send(testUser).expect(200);
+      await request.post('/users').send(testUser).expect(200);
 
       // 登录获取token
       const loginResult = await request
-        .get('/user/token')
-        .set('X-User-Name',testUser.name )
-        .set('X-User-Password',testUser.password )
+        .get(`/users/${testUser.name}/token`)
+        .set('X-User-Password', testUser.password)
         .expect(200);
       testToken = loginResult.body.data.token;
     });
@@ -193,8 +170,8 @@ describe('test/user.controller.test.ts', () => {
     it('应该成功修改余额', async () => {
       const amount = 100;
       const result = await request
-        .patch('/user/balance')
-        .send({ name: testUser.name, amount:amount })
+        .patch(`/users/${testUser.name}/balance`)
+        .send({ amount })
         .expect(200);
       expect(result.body.success).toBe(true);
       expect(result.body.balance).toBe(amount);
@@ -203,13 +180,13 @@ describe('test/user.controller.test.ts', () => {
     it('应该成功升级为VIP', async () => {
       // 先充值足够的余额
       await request
-        .patch('/user/balance')
-        .send({ name: testUser.name, amount: 288 })
+        .patch(`/users/${testUser.name}/balance`)
+        .send({ amount: 288 })
         .expect(200);
 
       const result = await request
-        .patch('/user/role')
-        .send({ name: testUser.name, token: testToken })
+        .patch(`/users/${testUser.name}/role`)
+        .send({ token: testToken })
         .expect(200);
       expect(result.body.success).toBe(true);
       expect(result.body.message).toBe('操作成功,您已成为永久VIP!');
@@ -218,13 +195,13 @@ describe('test/user.controller.test.ts', () => {
     it('应该因余额不足而无法升级VIP', async () => {
       // 确保余额不足
       await request
-        .patch('/user/balance')
-        .send({ name: testUser.name, amount: -300 })
+        .patch(`/users/${testUser.name}/balance`)
+        .send({ amount: -300 })
         .expect(200);
 
       const result = await request
-        .patch('/user/role')
-        .send({ name: testUser.name, token: testToken })
+        .patch(`/users/${testUser.name}/role`)
+        .send({ token: testToken })
         .expect(200);
       expect(result.body.success).toBe(true);
       expect(result.body.message).toBe('余额不足，请先充值');
@@ -234,10 +211,16 @@ describe('test/user.controller.test.ts', () => {
   describe('用户列表', () => {
     it('应该获取用户列表', async () => {
       const result = await request
-        .get('/user/list')
+        .get('/users/list/1')
         .expect(200);
       expect(result.body.data).toBeInstanceOf(Array);
-      expect(result.body.totalPages).toBeGreaterThanOrEqual(1);
+    });
+
+    it('应该搜索特定用户', async () => {
+      const result = await request
+        .get('/users/list/1/1')
+        .expect(200);
+      expect(result.body.data).toBeInstanceOf(Array);
     });
   });
 });

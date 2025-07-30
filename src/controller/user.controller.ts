@@ -1,10 +1,10 @@
-import {Body, Controller, Del, Get, Init, Inject, Options, Patch, Post, Query} from "@midwayjs/core";
+import {Body, Controller, Get, Init, Inject, Options, Param, Patch, Post,} from "@midwayjs/core";
 import { UserService } from '../service/user.service';
 import {Context} from "@midwayjs/koa";
 import {OrderService} from "../service/order.service";
 import {Mutex} from "../util/mutex";
 
-@Controller('/user')
+@Controller('/users')
 export class UserController{
 
   @Inject()
@@ -63,9 +63,8 @@ export class UserController{
     return { success: true }; // 直接返回 200
   }
 
-  @Get('/token')
-  async login() {
-    const name = this.ctx.get('X-User-Name');
+  @Get('/:name/token')
+  async login(@Param('name') name:string) {
     const  password = this.ctx.get('X-User-Password');
     const user=await this.userService.getUserByName(name);
     if (user!==undefined&&user!==null) {
@@ -86,14 +85,13 @@ export class UserController{
     }
   }
 
-  @Options('/token')
+  @Options('/:name/token')
   async handleOptionsLogIn() {
     return { success: true }; // 直接返回 200
   }
 
-  @Get('/admin')
-  async checkAdministrator(){
-    const name = this.ctx.get('X-User-Name');
+  @Get('/:name/admin')
+  async checkAdministrator(@Param('name') name:string){
     const  token = this.ctx.get('X-User-Token');
     const user=await this.userService.getUserByName(name);
     if (user===null||user===undefined){
@@ -102,41 +100,45 @@ export class UserController{
     if (user.isAdministrator&&user.token===token){
       return {success:true}
     }else {
-      throw new Error('验证失败')
+      return {success:false}
     }
   }
 
-  @Options('/admin')
+  @Options('/:name/admin')
   async handleOptionsAdmin() {
     return { success: true }; // 直接返回 200
   }
 
-  @Patch('/balance')
-  async changeBalance(@Body() body: {
-    name: string;
-    amount: number;
-  },){
-    const user=await this.userService.getUserByName(body.name);
+  @Patch('/:name/balance')
+  async changeBalance(@Body() body: { amount: number; },
+                      @Param('name') name:string){
+    const user=await this.userService.getUserByName(name);
     const newBalance=parseFloat((user.balance +body.amount).toFixed(2));
     await this.userService.updateUser(user.id,{balance: newBalance})
-    const newUser=await this.userService.getUserByName(body.name)
+    const newUser=await this.userService.getUserByName(name)
     return {success:true,balance:newUser.balance}
   }
 
-  @Get('/')
-  async getUser(@Query('name') name: string){
+  @Get('/:name')
+  async getUser(@Param('name') name: string){
     return await this.userService.getUserByName(name);
   }
 
+  @Options('/:name')
+  async getOptions(){
+    return {success:true};
+  }
 
-  @Options('/balance')
+
+  @Options('/:name/balance')
   async balance(){
     return {success: true}
   }
 
-  @Patch('/role')
-  async changeRole(@Body() body: {name: string,token: string}){
-    const user=await this.userService.getUserByName(body.name);
+  @Patch('/:name/role')
+  async changeRole(@Body() body: {token: string},
+                   @Param('name') name:string){
+    const user=await this.userService.getUserByName(name);
     if (user.token.toString()!==body.token.toString()){
       console.log(`user.token：${user.token}`+` body.token: ${body.token}`)
       throw new Error("登录状态异常")
@@ -151,16 +153,34 @@ export class UserController{
     }
   }
 
-  @Get('/list')
+  @Get('/list/:page')
   async getUserList(
-    @Query('page') page: number = 1,
-    @Query('keyword') keyword?: string
+    @Param('page') page: number = 1,
+  ) {
+    return await this.userService.findUsers(page, 5);
+  }
+
+  @Get('/list/:keyword/:page')
+  async getSpecificUserList(
+    @Param('page') page: number = 1,
+    @Param('keyword') keyword: string
   ) {
     return await this.userService.findUsers(page, 5, keyword);
   }
 
-  @Patch('/admin')
-  async setAdminRole(@Body() body: { userId: number, isAdministrator: boolean },) {
+  @Options('/list/:keyword/:page')
+  async searchOptions(){
+    return {success:true};
+  }
+
+  @Options('/list/:page')
+  async listOptions(){
+    return {success:true};
+  }
+
+  @Patch('/:id/admin')
+  async setAdminRole(@Body() body: {  isAdministrator: boolean },
+                     @Param('id') id:number) {
     // 验证当前操作者是否为超级管理员
     const name = this.ctx.get('X-User-Name');
     const  token = this.ctx.get('X-User-Token');
@@ -168,36 +188,24 @@ export class UserController{
     if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
       throw new Error('权限不足');
     }
-    const user=await this.userService.getUserById(body.userId);
-    if (user.name=="root"&&user.id==1){
+    const user=await this.userService.getUserById(id);
+    if (user.isSuperAdministrator){
       return {success:false,message:"超级管理员权限不可移除！"}
     }
-    await this.userService.updateUser(body.userId, {
+    await this.userService.updateUser(id, {
       isAdministrator: body.isAdministrator
     });
     return { success: true };
   }
 
-  @Del('/')
-  async deleteUser(@Query('id') id: number) {
-    // 验证当前操作者是否为超级管理员
-    const name = this.ctx.get('X-User-Name');
-    const  token = this.ctx.get('X-User-Token');
-    const currentUser = await this.userService.getUserByName(name);
-    if (!currentUser?.isAdministrator || currentUser.token.toString()!==token.toString()||name.toString()!=='root') {
-      throw new Error('权限不足');
-    }
-    await this.userService.deleteUser(id);
-    return { success: true };
-  }
 
-  @Options('/role')
+  @Options('/:name/role')
   async role(){
     return{success:true}
   }
 
-  @Get('/order')
-  async getOrders(@Query('name') name: string){
+  @Get('/:name/order')
+  async getOrders(@Param('name') name:string){
     if (!name){
       return {success: false,message:'登录状态异常'};
     }
@@ -208,7 +216,7 @@ export class UserController{
     return await this.orderService.getUserOrders(user)
   }
 
-  @Options('/order')
+  @Options('/:name/order')
   async orderOption(){
     return {success:true};
   }

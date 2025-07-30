@@ -27,4 +27,7 @@ export class User {
 
   @Column()
   isAdministrator:boolean;//管理员权限
+
+  @Column()
+  isSuperAdministrator:boolean;//超级管理员权限
 }

@@ -59,7 +59,7 @@ describe('test/comment.controller.test.ts', () => {
     beforeAll(async () => {
       // 注册测试用户
       if (!await userService.getUserByName(testUser.name)) {
-        await request.post('/user').send(testUser).expect(200);
+        await userService.createUser(testUser.name,testUser.password);
       }
       const user = await userService.getUserByName(testUser.name);
       userId = user.id;
