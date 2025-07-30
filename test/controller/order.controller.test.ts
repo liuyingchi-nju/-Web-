@@ -39,10 +39,10 @@ describe('test/order.controller.test.ts', () => {
     goodsService=await app.getApplicationContext().getAsync(GoodsService);
 
     // 创建测试盲盒
-    await goodsService.createGoods({name:"testGoods",avatarPath:"none"});
-    await blindBoxService.createBlindBox(testBlindBox);
-    if (!await blindBoxService.isGoodsInBlindBox(1,1)){
-      await blindBoxService.addGoodToBlindBox(1, 1); // 添加默认商品
+   const goods=await goodsService.createGoods({name:"testGoods",avatarPath:"none"});
+    const blindBox= await blindBoxService.createBlindBox(testBlindBox);
+    if (!await blindBoxService.isGoodsInBlindBox(blindBox.id,goods.id)){
+      await blindBoxService.addGoodToBlindBox(blindBox.id, goods.id); // 添加默认商品
     }
   });
 
@@ -75,7 +75,7 @@ describe('test/order.controller.test.ts', () => {
           .post('/orders')
           .send({
             name: testUser.name,
-            id:1,
+            id:blindBoxId,
           })
           .expect(200);
 
