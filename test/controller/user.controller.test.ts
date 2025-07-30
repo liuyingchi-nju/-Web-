@@ -112,6 +112,7 @@ describe('test/user.controller.test.ts', () => {
 
     beforeAll(async () => {
       // 管理员登录获取token
+      await userService.createAdmin('root','root');
       const loginResult = await request.get('/user/token')
         .set('X-User-Name', 'root')
         .set('X-User-Password','root')
