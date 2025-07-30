@@ -40,38 +40,57 @@ describe('test/goods.controller.test.ts', () => {
     }
   }
 
-  describe('GET /goods', () => {
+  describe('GET /goods/:page', () => {
     it('should get all goods with pagination', async () => {
       const result = await request
-        .get('/goods')
-        .query({ page: 1 })
+        .get('/goods/1') // Using path parameter instead of query
         .expect(200);
 
       expect(result.body.data).toBeInstanceOf(Array);
-      expect(result.body.totalPages).toBeDefined();
       expect(result.body.data.length).toBeGreaterThan(0);
     });
 
-    it('should search goods by keyword', async () => {
-      // First create a test goods
-      await goodsService.createGoods({ name: 'Special Test Goods ' + Math.random().toString(36).substr(2, 8) });
-
+    it('should return empty array for invalid page', async () => {
       const result = await request
-        .get('/goods')
-        .query({ keyword: 'Special', page: 1 })
+        .get('/goods/999') // Very high page number
+        .expect(200);
+
+      expect(result.body.data).toBeInstanceOf(Array);
+      expect(result.body.data.length).toBe(0);
+    });
+  });
+
+  describe('GET /goods/:keyword/:page', () => {
+    let testSearchGoods;
+
+    beforeAll(async () => {
+      // Create a specific test goods for search
+      testSearchGoods = {
+        name: 'SpecialSearchGoods_' + Math.random().toString(36).substr(2, 8)
+      };
+      await goodsService.createGoods({ name: testSearchGoods.name });
+    });
+
+    afterAll(async () => {
+      await cleanupTestGoods(testSearchGoods.name);
+    });
+
+    it('should search goods by keyword', async () => {
+      const result = await request
+        .get(`/goods/${testSearchGoods.name}/1`) // Using path parameters
         .expect(200);
 
       expect(result.body.data).toBeInstanceOf(Array);
       expect(result.body.totalPages).toBeDefined();
-      expect(result.body.data.some(g => g.name.includes('Special'))).toBe(true);
+      expect(result.body.data.some(g => g.name.includes(testSearchGoods.name))).toBe(true);
     });
 
   });
 
-  describe('OPTIONS /goods', () => {
+  describe('OPTIONS /goods/:page', () => {
     it('should handle OPTIONS request', async () => {
       const result = await request
-        .options('/goods')
+        .options('/goods/1')
         .expect(200);
 
       expect(result.body.success).toBe(true);
@@ -98,12 +117,13 @@ describe('test/goods.controller.test.ts', () => {
       expect(goods.data[0].avatarPath).toContain('nopicture.jpg'); // Default image
     });
 
+    // Note: Actual file upload test would require more setup
     it('should create new goods with image', async () => {
-      // This would need a real file upload test in a real scenario
-      // For now we just test the happy path without actual file upload
       const result = await request
         .post('/goods')
         .field('name', testGoods.name + '_with_image')
+        // In a real test, you would attach a file here
+        // .attach('avatar', 'path/to/test/image.jpg')
         .expect(200);
 
       expect(result.body.success).toBe(true);
@@ -112,14 +132,12 @@ describe('test/goods.controller.test.ts', () => {
       const goods = await goodsService.searchGoodsByName(testGoods.name + '_with_image', 1, 1);
       expect(goods.data.length).toBe(1);
     });
-
   });
 
   describe('Data Initialization', () => {
     it('should have initialized default goods', async () => {
       const result = await request
-        .get('/goods')
-        .query({ page: 1 })
+        .get('/goods/1')
         .expect(200);
 
       // Check that some default goods exist

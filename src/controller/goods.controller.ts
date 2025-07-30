@@ -1,4 +1,4 @@
-import {Inject, Controller, Init, Get, Query, Options, Post, Files, Fields} from '@midwayjs/core';
+import {Inject, Controller, Init, Get, Options, Post, Files, Fields, Param} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import {GoodsService} from "../service/goods.service";
 import {InjectEntityModel} from "@midwayjs/typeorm";
@@ -24,22 +24,27 @@ export class GoodsController{
     await this.goodsService.initDefaultGoods();
   }
 
-  @Get('')
-  async getAllGoods(@Query('page') page: number = 1, @Query('keyword') keyword?: string){
-    if(keyword) {
+  @Get('/:page')
+  async getGoodsList(@Param('page') page: number = 1){
+    return await this.goodsService.getAllGoods(page, 7);
+  }
+
+  @Options('/:page')
+  async GoodsList(){
+    return{success:true};
+  }
+
+  @Get('/:keyword/:page')
+  async getGoodsByKeywords(@Param('page') page: number = 1, @Param('keyword') keyword: string){
+    if (keyword.length>0) {
       const result = await this.goodsService.searchGoodsByName(keyword, page, 7);
       return {
         data: result.data,
         totalPages: Math.ceil(result.count / 7)
       };
-    } else {
-      return await this.goodsService.getAllGoods(page, 7);
+    }else {
+      return this.getGoodsList(page);
     }
-  }
-
-  @Options('/')
-  async AllGoods(){
-    return{success:true};
   }
 
   @Post('/')
