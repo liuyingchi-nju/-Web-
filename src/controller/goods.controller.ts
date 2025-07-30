@@ -47,6 +47,11 @@ export class GoodsController{
     }
   }
 
+  @Options('/:keywords/:page')
+  async searchOptions(){
+    return {success: true};
+  }
+
   @Post('/')
   async creatGoods(@Files() files: Array<{ filename: string; data: Buffer; fieldName: string }>,
                    @Fields() fields: { name: string}){
@@ -60,6 +65,12 @@ export class GoodsController{
     }
     await this.goodsService.createGoods({name:fields.name,avatarPath:avatarPath});
     return {success:true};
+  }
+
+
+  @Options('/')
+  async creatOptions(){
+    return {success: true};
   }
 
 

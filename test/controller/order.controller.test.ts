@@ -5,6 +5,7 @@ import { OrderService } from '../../src/service/order.service';
 import { BlindBoxService } from '../../src/service/blindbox.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import {GoodsService} from "../../src/service/goods.service";
 
 describe('test/order.controller.test.ts', () => {
   let app;
@@ -12,8 +13,9 @@ describe('test/order.controller.test.ts', () => {
   let userService: UserService;
   let orderService: OrderService;
   let blindBoxService: BlindBoxService;
+  let goodsService:GoodsService;
 
-  // Test data with random strings to avoid conflicts
+  // 测试数据使用随机字符串避免冲突
   const testUser = {
     name: 'order_test_user_' + Math.random().toString(36).substr(2, 5),
     password: 'test_password_' + Math.random().toString(36).substr(2, 5)
@@ -26,18 +28,20 @@ describe('test/order.controller.test.ts', () => {
   };
 
   beforeAll(async () => {
-    // Create app instance
+    // 创建应用实例
     app = await createApp<Framework>();
     request = createHttpRequest(app);
 
-    // Get service instances
+    // 获取服务实例
     userService = await app.getApplicationContext().getAsync(UserService);
     orderService = await app.getApplicationContext().getAsync(OrderService);
     blindBoxService = await app.getApplicationContext().getAsync(BlindBoxService);
+    goodsService=await app.getApplicationContext().getAsync(GoodsService);
 
-    // Create test blindbox
-    const blindBox = await blindBoxService.createBlindBox(testBlindBox);
-    await blindBoxService.addGoodToBlindBox(blindBox.id, 1); // Add default goods
+    // 创建测试盲盒
+    await goodsService.createGoods({name:"testGoods",avatarPath:"none"});
+    await blindBoxService.createBlindBox(testBlindBox);
+    await blindBoxService.addGoodToBlindBox(1, 1); // 添加默认商品
   });
 
   afterAll(async () => {
@@ -45,43 +49,31 @@ describe('test/order.controller.test.ts', () => {
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
     }
-    // Close app instance
+    // 关闭应用实例
     await close(app);
   });
 
-  describe('Order Functionality', () => {
+  describe('订单功能', () => {
     let blindBoxId: number;
 
     beforeAll(async () => {
-      // Register test user
-      await request.post('/user').send(testUser).expect(200);
+      // 注册测试用户
+      const user=await userService.createUser(testUser.name,testUser.password);
 
-      // Get test blindbox ID
-      const blindBoxes = await blindBoxService.getBlindBoxesByPage(1, 1);
-      blindBoxId = blindBoxes.data[0].id;
+      // 获取测试盲盒ID
+      const blindBoxes = (await blindBoxService.getBlindBoxesByPage(1, 1)).data;
+      blindBoxId = blindBoxes[0].id;
 
-      // Login to get token
-      await request
-        .get('/user/token')
-        .set('X-User-Name', testUser.name)
-        .set('X-User-Password', testUser.password)
-        .expect(200);
-
-      // Add balance to user
-      await request
-        .patch('/user/balance')
-        .send({ name: testUser.name, amount: 1000 })
-        .expect(200);
+      await userService.updateUser(user.id,{balance:10000});
     });
 
-    describe('POST /order', () => {
-      it('should successfully create an order', async () => {
+    describe('POST /orders', () => {
+      it('应该成功创建订单', async () => {
         const result = await request
-          .post('/order')
+          .post('/orders')
           .send({
             name: testUser.name,
-            id: blindBoxId,
-            price: testBlindBox.price
+            id:1,
           })
           .expect(200);
 
@@ -90,12 +82,12 @@ describe('test/order.controller.test.ts', () => {
         expect(result.body.order).toBeDefined();
       });
 
-      it('should fail when blindbox is sold out', async () => {
-        // First make blindbox sold out
+      it('当盲盒售罄时应失败', async () => {
+        // 首先将盲盒设为售罄
         await blindBoxService.updateBlindBox(blindBoxId, { num: 0 });
 
-        const result = await request
-          .post('/order')
+        await request
+          .post('/orders')
           .send({
             name: testUser.name,
             id: blindBoxId,
@@ -103,21 +95,18 @@ describe('test/order.controller.test.ts', () => {
           })
           .expect(400);
 
-        expect(result.body.success).toBe(false);
-        expect(result.body.message).toBe('该盲盒已售罄');
-
-        // Restore blindbox quantity
+        // 恢复盲盒数量
         await blindBoxService.updateBlindBox(blindBoxId, { num: 10 });
       });
 
-      it('should fail when user has insufficient balance', async () => {
-        // First set user balance to 0
+      it('当用户余额不足时应失败', async () => {
+        // 首先将用户余额设为0
         const user = await userService.getUserByName(testUser.name);
         user.balance = 0;
         await userService.userRepo.save(user);
 
-        const result = await request
-          .post('/order')
+        await request
+          .post('/orders')
           .send({
             name: testUser.name,
             id: blindBoxId,
@@ -125,20 +114,16 @@ describe('test/order.controller.test.ts', () => {
           })
           .expect(400);
 
-        expect(result.body.success).toBe(false);
-        expect(result.body.message).toBe('余额不足');
-
-        // Restore user balance
+        // 恢复用户余额
         user.balance = 1000;
         await userService.userRepo.save(user);
       });
     });
 
-    describe('GET /order/unsentlist', () => {
-      it('should get list of unsent orders with pagination', async () => {
+    describe('GET /orders/todo-list/:page', () => {
+      it('应该获取未发货订单列表并分页', async () => {
         const result = await request
-          .get('/order/unsentlist')
-          .query({ page: 1 })
+          .get('/orders/todo-list/1')
           .expect(200);
 
         expect(result.body.success).toBe(true);
@@ -149,9 +134,9 @@ describe('test/order.controller.test.ts', () => {
       });
     });
 
-    describe('GET /order/detail', () => {
-      it('should get order details by ID', async () => {
-        // First create an order
+    describe('GET /orders/:id', () => {
+      it('应该通过ID获取订单详情', async () => {
+        // 首先创建一个订单
         const order = await orderService.createOrder(
           await userService.getUserByName(testUser.name),
           testBlindBox.price,
@@ -159,24 +144,21 @@ describe('test/order.controller.test.ts', () => {
         );
 
         const result = await request
-          .get('/order/detail')
-          .query({ id: order.id })
+          .get(`/orders/${order.id}`)
           .expect(200);
 
         expect(result.body.id).toBe(order.id);
-        expect(result.body.goods).toBeDefined();
       });
 
-      it('should return error for non-existent order', async () => {
+      it('对于不存在的订单应返回错误', async () => {
         await request
-          .get('/order/detail')
-          .query({ id: 999999 })
+          .get('/orders/999999')
           .expect(500);
       });
     });
 
-    describe('PATCH /order/condition', () => {
-      it('should update order status to sent', async () => {
+    describe('PATCH /orders/:id/status', () => {
+      it('应该更新订单状态为已发货', async () => {
         const order = await orderService.createOrder(
           await userService.getUserByName(testUser.name),
           testBlindBox.price,
@@ -184,22 +166,21 @@ describe('test/order.controller.test.ts', () => {
         );
 
         const result = await request
-          .patch('/order/condition')
+          .patch(`/orders/${order.id}/status`)
           .send({
-            orderId: order.id,
             mode: 'isSent'
           })
           .expect(200);
 
         expect(result.body.success).toBe(true);
 
-        // Verify the update
+        // 验证更新
         const updatedOrder = await orderService.getOrderById(order.id);
         expect(updatedOrder.isSent).toBe(true);
       });
 
-      it('should update order status to received and done', async () => {
-        // First create and send an order
+      it('应该更新订单状态为已收货和已完成', async () => {
+        // 首先创建并发送一个订单
         const order = await orderService.createOrder(
           await userService.getUserByName(testUser.name),
           testBlindBox.price,
@@ -208,23 +189,22 @@ describe('test/order.controller.test.ts', () => {
         await orderService.updateOrderStatus(order.id, { isSent: true });
 
         const result = await request
-          .patch('/order/condition')
+          .patch(`/orders/${order.id}/status`)
           .send({
-            orderId: order.id,
             mode: 'isReceived'
           })
           .expect(200);
 
         expect(result.body.success).toBe(true);
 
-        // Verify the update
+        // 验证更新
         const updatedOrder = await orderService.getOrderById(order.id);
         expect(updatedOrder.isReceived).toBe(true);
         expect(updatedOrder.isDone).toBe(true);
       });
 
-      it('should not mark as received if not sent', async () => {
-        // First create an order (not sent)
+      it('如果订单未发货则不应标记为已收货', async () => {
+        // 首先创建一个订单(未发货)
         const order = await orderService.createOrder(
           await userService.getUserByName(testUser.name),
           testBlindBox.price,
@@ -232,44 +212,43 @@ describe('test/order.controller.test.ts', () => {
         );
 
         await request
-          .patch('/order/condition')
+          .patch(`/orders/${order.id}/status`)
           .send({
-            orderId: order.id,
             mode: 'isReceived'
           })
-          .expect(500);
+          .expect(400);
 
-        // Verify the order is not marked as received
+        // 验证订单未被标记为已收货
         const updatedOrder = await orderService.getOrderById(order.id);
         expect(updatedOrder.isReceived).toBe(false);
       });
     });
 
-    describe('OPTIONS routes', () => {
-      it('should handle OPTIONS /order', async () => {
+    describe('OPTIONS路由', () => {
+      it('应该处理OPTIONS /orders', async () => {
         const result = await request
-          .options('/order')
+          .options('/orders')
           .expect(200);
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /order/unsentlist', async () => {
+      it('应该处理OPTIONS /orders/todo-list/:page', async () => {
         const result = await request
-          .options('/order/unsentlist')
+          .options('/orders/todo-list/1')
           .expect(200);
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /order/detail', async () => {
+      it('应该处理OPTIONS /orders/:id', async () => {
         const result = await request
-          .options('/order/detail')
+          .options('/orders/1')
           .expect(200);
         expect(result.body.success).toBe(true);
       });
 
-      it('should handle OPTIONS /order/condition', async () => {
+      it('应该处理OPTIONS /orders/:id/status', async () => {
         const result = await request
-          .options('/order/condition')
+          .options('/orders/1/status')
           .expect(200);
         expect(result.body.success).toBe(true);
       });

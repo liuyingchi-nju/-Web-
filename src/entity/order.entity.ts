@@ -31,7 +31,7 @@ export class Order {
   goods: Goods
 
   @Column({nullable:true})
-  contact: number
+  contactNumber: number
 
   @Column({nullable:true})
   address:string

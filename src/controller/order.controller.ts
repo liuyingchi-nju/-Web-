@@ -1,11 +1,11 @@
-import {Inject, Controller, Post, Body, Options, Get, Query, Patch} from '@midwayjs/core';
+import {Inject, Controller, Post, Body, Options, Get, Patch, Param} from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import { OrderService } from "../service/order.service";
 import { BlindBoxService } from "../service/blindbox.service";
 import { UserService } from "../service/user.service";
 import { Mutex } from '../util/mutex';
 
-@Controller("/order")
+@Controller("/orders")
 export class OrderController {
   @Inject()
   ctx: Context;
@@ -22,26 +22,24 @@ export class OrderController {
   private mutex = new Mutex();
 
   @Post('/')
-  async postOrder(@Body() body: { name: string, id: number ,price:number}) {
-    const { name, id } = body;
-    await this.mutex.lock();
+  async postOrder(@Body() body: { name: string, id: number}) {
+        await this.mutex.lock();
     try {
-      const [user, blindBox] = await Promise.all([
-        this.userService.getUserByName(name),
-        this.blindBoxService.getBlindBoxById(id, true)
-      ]);
-      if (!user) throw new Error('用户不存在');
-      if (!blindBox) throw new Error('盲盒不存在');
-      if (blindBox.num <= 0) throw new Error('该盲盒已售罄');
+      const user=await this.userService.getUserByName(body.name);
+      const blindBox=await this.blindBoxService.getBlindBoxById(body.id);
+      const price=blindBox.price;
+      if (!user||!blindBox||blindBox.num<=0){
+        this.ctx.status=400;
+        return;
+      }
       let blindBoxPrice = 0;
       if (user.isVIP){
-        blindBoxPrice = Math.round(body.price*0.9*100) / 100;
+        blindBoxPrice = Math.round(price*0.9*100) / 100;
       }else {
-        blindBoxPrice = Math.round(body.price*100) / 100;
+        blindBoxPrice = Math.round(price*100) / 100;
       }
       if (user.balance < blindBoxPrice) throw new Error('余额不足');
-
-      const order = await this.orderService.createOrder(user, blindBoxPrice,id);
+      const order = await this.orderService.createOrder(user, blindBoxPrice,body.id);
       blindBox.num -= 1;
       await this.blindBoxService.blindBoxModel.save(blindBox);
       user.balance -= blindBoxPrice;
@@ -67,14 +65,14 @@ export class OrderController {
     return {success:true};
   }
 
-  @Options('/unsentlist')
+  @Options('/todo-list/:page')
   async option(){
     return{success:true};
   }
 
-  @Get('/unsentlist')
+  @Get('/todo-list/:page')
   async getUnfinishedOrders(
-    @Query('page') page: number = 1,
+    @Param('page') page: number = 1,
   ) {
     try {
       // 添加分页参数，默认第一页，每页10条
@@ -88,7 +86,7 @@ export class OrderController {
         message: '获取未发货订单列表成功'
       };
     } catch (error) {
-      this.ctx.status = 500;
+      this.ctx.status = 400;
       return {
         success: false,
         message: error.message || '获取未发货订单列表失败'
@@ -96,54 +94,69 @@ export class OrderController {
     }
   }
 
-  @Get('/detail')
-  async getDetail(@Query('id') id: number){
+  @Get('/:id')
+  async getDetail(@Param('id') id: number){
     if (await this.orderService.getOrderById(id)!==null&&await this.orderService.getOrderById(id)!==undefined){
       return await this.orderService.getOrderById(id);
     }
     throw new Error("订单不存在")
   }
 
-  @Options('/detail')
+  @Options('/:id')
   async detailOptions(){
     return {success:true};
   }
 
-  @Patch('/condition')
-  async updateConditions(@Body() body: {  orderId: number,mode:string}){
+  @Patch('/:id/status')
+  async updateConditions(@Body() body: {mode:string},
+  @Param('id') id:number){
     if (body.mode==='isSent'){
-      await this.orderService.updateOrderStatus(body.orderId,{isSent:true});
-      return {success:true};
-    }else if (body.mode==='isReceived'){
-      const order=await this.orderService.getOrderById(body.orderId);
-      if (order&&order.isSent){
-        await this.orderService.updateOrderStatus(body.orderId,{isReceived:true,isDone:true});
+      try {
+        await this.orderService.updateOrderStatus(id,{isSent:true});
         return {success:true};
+      }catch (error){
+        this.ctx.status=400;
+        return {success:false}
       }
-      throw new Error("修改失败")
+    }else if (body.mode==='isReceived'){
+      const order=await this.orderService.getOrderById(id);
+      if (order&&order.isSent){
+        try {
+          await this.orderService.updateOrderStatus(id,{isReceived:true,isDone:true});
+          return {success:true};
+        }catch (error){
+          this.ctx.status=400;
+          return {success:false}
+        }
+      }
+      this.ctx.status=400;
     }
-    throw new Error("暂不支持其他订单状态修改模式")
+    //
+    this.ctx.status=400
   }
 
-  @Options('/condition')
+  @Options('/:id/status')
   async conditionOptions(){
     return {success:true};
   }
 
-  @Patch('/address&contact')
-  async updateAddressAndContact(@Body() body: { orderId: number,address:string,contact:number}){
-    const order=this.orderService.getOrderById(body.orderId);
+  @Patch('/:id/address&contactNumber')
+  async updateAddressAndContact(@Body() body: {address:string,contact:number},
+                                @Param('id') id:number){
+    const order=this.orderService.getOrderById(id);
     if (!order){
-      throw new Error("订单不存在");
+     this.ctx.status=400;
+     return ;
     }
-    if (!body.orderId||!body.address){
-      return {success:false,message:"填写信息不完整"};
+    if (!id||!body.address){
+      this.ctx.status=400;
+      return ;
     }
-    await this.orderService.updateOrderStatus(body.orderId,{address:body.address,contact:body.contact});
+    await this.orderService.updateOrderStatus(id,{address:body.address,contactNumber:body.contact});
     return {success:true,message:"修改成功"};
   }
 
-  @Options('/address&contact')
+  @Options('/:id/address&contactNumber')
   async theAddressContactOption(){
     return {success:true};
   }
